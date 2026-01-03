@@ -1,0 +1,131 @@
+{% extends "dashboard/base.html" %}
+{% load static %}
+
+{% block title %}ML Results{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/results.css' %}">
+{% endblock %}
+
+{% block body %}
+
+<div class="container-fluid">
+
+  <!-- =========================
+       TOP ML SECTION (GLOW BG)
+       ========================= -->
+  <div class="ml-top-section">
+
+    <!-- PAGE TITLE -->
+    <div class="mb-4">
+      <h2 class="fw-bold">ML Results: Delivery Delay Prediction</h2>
+      <p class="text-muted">
+        Explainable machine learning model for predicting late deliveries
+      </p>
+    </div>
+
+    <!-- MODEL SUMMARY -->
+    <div class="card bg-dark text-light mb-4">
+      <div class="card-body">
+        <h4 class="mb-3">Model Summary</h4>
+        <ul class="mb-0">
+          <li><strong>Model:</strong> {{ ml.model_name }}</li>
+          <li><strong>Problem Type:</strong> Binary Classification</li>
+          <li><strong>Target Variable:</strong> Delivery Delay (Yes / No)</li>
+          <li><strong>Main Feature Used:</strong> Freight Value</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- METRICS -->
+    <div class="row mb-4">
+      <div class="col-md-4">
+        <div class="card bg-secondary text-light text-center">
+          <div class="card-body">
+            <h6>Accuracy</h6>
+            <h3>{{ ml.accuracy }}</h3>
+          </div>
+        </div>
+      </div>
+
+      <div class="col-md-4">
+        <div class="card bg-secondary text-light text-center">
+          <div class="card-body">
+            <h6>Precision (Delayed)</h6>
+            <h3>{{ ml.precision }}</h3>
+          </div>
+        </div>
+      </div>
+
+      <div class="col-md-4">
+        <div class="card bg-secondary text-light text-center">
+          <div class="card-body">
+            <h6>Recall (Delayed)</h6>
+            <h3>{{ ml.recall }}</h3>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- CONFUSION MATRIX -->
+    <div class="card bg-dark text-light mb-4">
+      <div class="card-body">
+        <h4 class="mb-3">Confusion Matrix</h4>
+        <table class="table table-dark table-bordered text-center">
+          <tr>
+            <th></th>
+            <th>Predicted On-Time</th>
+            <th>Predicted Delayed</th>
+          </tr>
+          <tr>
+            <th>Actual On-Time</th>
+            <td>{{ ml.confusion_matrix.tn }}</td>
+            <td>{{ ml.confusion_matrix.fp }}</td>
+          </tr>
+          <tr>
+            <th>Actual Delayed</th>
+            <td>{{ ml.confusion_matrix.fn }}</td>
+            <td>{{ ml.confusion_matrix.tp }}</td>
+          </tr>
+        </table>
+      </div>
+    </div>
+
+    <!-- FEATURE IMPORTANCE -->
+    <div class="card bg-dark text-light mb-4">
+      <div class="card-body">
+        <h4>Feature Importance</h4>
+        <p>
+          <strong>Freight Value Coefficient:</strong>
+          {{ ml.feature_importance.freight_value }}
+        </p>
+      </div>
+    </div>
+
+  </div> <!-- END ml-top-section -->
+
+  <!-- =========================
+       LOWER SECTION (NORMAL BG)
+       ========================= -->
+
+  <!-- BUSINESS INSIGHT -->
+  <div class="alert alert-warning">
+    <h5>Business Insight</h5>
+    <p>
+      Orders with higher freight costs are more likely to be delayed.
+    </p>
+  </div>
+
+  <!-- MODEL LIMITATIONS -->
+  <div class="alert alert-info">
+    <h5>Model Limitations</h5>
+    <ul>
+      <li>Single feature model</li>
+      <li>Imbalanced dataset</li>
+      <li>Recall prioritized over precision</li>
+    </ul>
+  </div>
+
+</div>
+
+{% endblock %}

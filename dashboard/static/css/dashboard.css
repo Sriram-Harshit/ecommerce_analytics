@@ -1,0 +1,360 @@
+.tester {
+  font-size: 2rem;
+  color: #ffc107;
+}
+.kpi-card {
+  background: linear-gradient(180deg, #0b0b0b, #000000);
+  border-radius: 14px;
+  padding: 22px 24px;
+  min-width: 200px;
+
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.7),
+    inset 0 0 0 1px rgba(255, 193, 7, 0.12);
+
+  transition: transform 0.25s ease, box-shadow 0.25s ease;
+}
+
+.kpi-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 14px 36px rgba(0, 0, 0, 0.9),
+    inset 0 0 0 1px rgba(255, 193, 7, 0.25);
+}
+
+.kpi-card span {
+  color: #9aa0aa;
+  font-size: 0.85rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.kpi-card h3 {
+  margin-top: 12px;
+  font-size: 1.6rem;
+  font-weight: 600;
+  color: #ffc107;
+}
+
+/* =========================
+   CHART CARDS
+   ========================= */
+
+.chart-card {
+  background: radial-gradient(
+      120% 120% at 10% 10%,
+      rgba(255, 193, 7, 0.06),
+      transparent 40%
+    ),
+    #000;
+  border-radius: 16px;
+  padding: 1rem 1.2rem;
+  height: 100%;
+
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.65),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.04);
+}
+
+.chart-card h6 {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #f8f9fa;
+  letter-spacing: 0.3px;
+}
+
+/* Canvas sizing */
+.chart-card canvas {
+  width: 100% !important;
+  height: 280px !important;
+}
+
+/* =========================
+   YEAR NAVIGATION
+   ========================= */
+
+.year-nav button {
+  border-radius: 8px;
+  padding: 0.15rem 0.5rem;
+  transition: background-color 0.2s ease, transform 0.15s ease;
+}
+
+.year-nav button:hover {
+  transform: scale(1.05);
+}
+
+#currentYear {
+  color: #ffc107;
+  font-size: 0.9rem;
+}
+
+/* =========================
+   RESPONSIVE: 786px AND UP
+   ========================= */
+
+@media (min-width: 786px) {
+  .tester {
+    font-size: 1.6rem;
+  }
+
+  /* KPI cards align nicely */
+  .kpi-card {
+    min-width: 200px;
+  }
+
+  /* Larger charts on tablet+ */
+  .chart-card canvas {
+    height: 280px !important;
+  }
+}
+
+/* =========================
+   RESPONSIVE: DESKTOP (992+)
+   ========================= */
+
+@media (min-width: 992px) {
+  .chart-card {
+    padding: 1.2rem 1.4rem;
+  }
+
+  .chart-card canvas {
+    height: 260px !important;
+  }
+
+  .kpi-card h3 {
+    font-size: 2rem;
+  }
+}
+
+/* =========================
+   RESPONSIVE: LARGE DESKTOP
+   ========================= */
+
+@media (min-width: 1200px) {
+  .chart-card canvas {
+    height: 280px !important;
+  }
+}
+
+/* =========================
+   TIER 2 ANALYTICS
+   ========================= */
+
+.tier2-title {
+  font-size: 1.4rem;
+  font-weight: 600;
+  color: #f8f9fa;
+}
+
+/* Tier-2 Card Container */
+.tier2-card {
+  background: linear-gradient(180deg, #0b0b0b, #000);
+  border-radius: 14px;
+  padding: 22px 24px;
+  min-height: 100%;
+  width: 100%;
+
+  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.7),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.04);
+}
+
+/* Header */
+.tier2-header h5 {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #ffc107;
+  margin-bottom: 4px;
+}
+
+.tier2-header p {
+  font-size: 0.85rem;
+  color: #9aa0aa;
+  margin-bottom: 16px;
+}
+
+/* =========================
+   TIER 2 TABLE
+   ========================= */
+
+.tier2-table {
+  width: 100%;
+  border-collapse: collapse;
+  color: #eaeaea;
+  font-size: 0.85rem;
+}
+
+/* Table Header */
+.tier2-table thead th {
+  background-color: #121212;
+  color: #f1c40f;
+  text-transform: uppercase;
+  font-size: 0.7rem;
+  letter-spacing: 0.05em;
+  padding: 12px;
+  border-bottom: 1px solid #2a2a2a;
+}
+
+/* Table Body */
+.tier2-table tbody td {
+  padding: 12px;
+  border-bottom: 1px solid #1f1f1f;
+}
+
+/* Zebra rows */
+.tier2-table tbody tr:nth-child(even) {
+  background-color: #141414;
+}
+
+/* Hover */
+.tier2-table tbody tr:hover {
+  background-color: #1c1c1c;
+}
+
+/* Center-align numeric columns (headers + data) */
+.tier2-table th:not(:first-child),
+.tier2-table td:not(:first-child) {
+  text-align: center;
+}
+
+/* Keep first column left-aligned (labels) */
+.tier2-table th:first-child,
+.tier2-table td:first-child {
+  text-align: left;
+}
+
+.tier2-table thead th {
+  padding: 10px 12px;
+}
+/* =========================
+   TIER 2 INSIGHT BOX
+   ========================= */
+
+.tier2-insight {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.tier2-insight p {
+  font-size: 0.9rem;
+  color: #cfd3da;
+  margin-top: 0.5rem;
+}
+
+/* =========================
+   TIER 2 ROW FIX (SCOPED)
+   ========================= */
+
+.tier2-row > [class*="col-"] {
+  display: flex;
+}
+
+/* =========================
+   RETENTION INSIGHT CARD
+   ========================= */
+
+.insight-metric {
+  margin: 12px 0 16px;
+  display: flex;
+  flex-direction: column;
+}
+
+.insight-label {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #9aa0aa;
+}
+
+.insight-value {
+  font-size: 2.2rem;
+  font-weight: 600;
+  color: #ffc107;
+  line-height: 1.2;
+}
+
+.insight-text {
+  font-size: 0.9rem;
+  color: #eaeaea;
+  margin-bottom: 8px;
+}
+
+.insight-subtext {
+  font-size: 0.8rem;
+  color: #9aa0aa;
+}
+
+.insight-subtext strong {
+  color: #ffc107;
+  font-weight: 500;
+}
+
+/* =========================
+   TIER 4 : DATA QUALITY & OPERATIONAL INSIGHTS
+   ========================= */
+
+/* Reuse Tier-2 card look */
+.tier4-card {
+  background: linear-gradient(180deg, #0b0b0b, #000);
+  border-radius: 14px;
+  padding: 22px 24px;
+  min-height: 100%;
+  width: 100%;
+
+  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.7),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.04);
+}
+
+/* Tier-4 section spacing */
+.tier4-section {
+  margin-top: 4rem;
+}
+
+/* Tier-4 headers match Tier-2 */
+.tier4-card h6 {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #ffc107;
+  margin-bottom: 12px;
+}
+
+/* Text inside Tier-4 cards */
+.tier4-card p {
+  font-size: 0.85rem;
+  color: #cfd3da;
+  margin-bottom: 6px;
+}
+
+/* Missing values list */
+.tier4-card ul {
+  padding-left: 1rem;
+  margin-bottom: 0;
+}
+
+.tier4-card ul li {
+  font-size: 0.8rem;
+  color: #eaeaea;
+}
+
+/* Risk rows */
+.tier4-risk {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.85rem;
+  margin-bottom: 10px;
+}
+
+/* Risk states */
+.tier4-risk.high {
+  color: #ff6b6b;
+  font-weight: 600;
+}
+
+.tier4-risk.low {
+  color: #51cf66;
+  font-weight: 600;
+}
+
+/* Export helper text */
+.tier4-helper {
+  font-size: 0.75rem;
+  color: #9aa0aa;
+}

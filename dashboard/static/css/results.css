@@ -1,0 +1,181 @@
+/* =========================
+   ML RESULTS PAGE STYLES
+   ========================= */
+
+/* Page container */
+.container-fluid {
+  padding: 2rem 2.5rem;
+}
+
+/* Page title */
+.container-fluid h2 {
+  font-size: 1.6rem;
+  font-weight: 700;
+  letter-spacing: 0.3px;
+  color: #f5f7fa;
+}
+
+/* Subtitle */
+.container-fluid p.text-muted {
+  font-size: 0.9rem;
+  color: #9aa4b2 !important;
+}
+
+/* =========================
+   CARDS (GLOBAL)
+   ========================= */
+
+.card {
+  border-radius: 14px;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  background: linear-gradient(180deg, #1c2127, #171b20);
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.45);
+}
+
+.card h4,
+.card h5 {
+  font-weight: 600;
+  letter-spacing: 0.3px;
+  margin-bottom: 0.75rem;
+}
+
+/* =========================
+   MODEL SUMMARY
+   ========================= */
+
+.card ul li {
+  font-size: 0.9rem;
+  color: #d1d7e0;
+  margin-bottom: 0.35rem;
+}
+
+.card ul li strong {
+  color: #ffffff;
+}
+
+/* =========================
+   METRIC CARDS
+   ========================= */
+
+.card.bg-secondary {
+  background: linear-gradient(180deg, #2a2f36, #22262c);
+  border: none;
+}
+
+.card.bg-secondary h6 {
+  font-size: 0.75rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #9aa4b2;
+  margin-bottom: 0.4rem;
+}
+
+.card.bg-secondary h3 {
+  font-size: 2rem;
+  font-weight: 700;
+  color: #ffc107;
+}
+
+/* =========================
+   CONFUSION MATRIX TABLE
+   ========================= */
+
+.table {
+  margin-bottom: 0;
+}
+
+.table th {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #cfd3dc;
+  background-color: rgba(255, 255, 255, 0.03);
+}
+
+.table td {
+  font-size: 0.9rem;
+  color: #ffffff;
+  background-color: rgba(255, 255, 255, 0.02);
+}
+
+.table-bordered > :not(caption) > * {
+  border-color: rgba(255, 255, 255, 0.08);
+}
+
+/* =========================
+   FEATURE IMPORTANCE
+   ========================= */
+
+.card p {
+  font-size: 0.95rem;
+  color: #e4e7ec;
+}
+
+.card small {
+  font-size: 0.8rem;
+  color: #9aa4b2;
+}
+
+/* =========================
+   ALERTS (INSIGHTS)
+   ========================= */
+
+.alert {
+  border-radius: 14px;
+  border: none;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.35);
+}
+
+/* Business insight */
+.alert-warning {
+  background: linear-gradient(180deg, #3a2f0b, #2d2508);
+  color: #ffe08a;
+}
+
+.alert-warning h5 {
+  color: #ffc107;
+  font-weight: 600;
+}
+
+/* Limitations */
+.alert-info {
+  background: linear-gradient(180deg, #0d2a33, #0a1f26);
+  color: #9adcf0;
+}
+
+.alert-info h5 {
+  color: #4dd0e1;
+  font-weight: 600;
+}
+
+.alert-info ul li {
+  font-size: 0.9rem;
+  margin-bottom: 0.3rem;
+}
+
+/* =========================
+   RESPONSIVE TWEAKS
+   ========================= */
+
+@media (max-width: 768px) {
+  .container-fluid {
+    padding: 1.5rem 1.2rem;
+  }
+
+  .card.bg-secondary h3 {
+    font-size: 1.6rem;
+  }
+}
+
+/* =========================
+   ML TOP SECTION BACKGROUND
+   ========================= */
+
+.ml-top-section {
+  background: linear-gradient(180deg, #151a1f, #111418);
+  padding: 2rem;
+  border-radius: 20px;
+  margin-bottom: 2.5rem;
+
+  /* performance hint */
+  transform: translateZ(0);
+}
