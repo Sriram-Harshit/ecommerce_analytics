@@ -43,6 +43,34 @@ The dataset is treated as **production-grade data**, not a demo dataset.
 
 ---
 
+## 🖼️ Dashboard Preview
+
+### Business Overview & KPIs
+
+![Business Overview](<Readme_assets/Business-Overview%20(4).png>)
+
+### Operational Performance Trends
+
+![Operational Trends](<Readme_assets/Business-Overview%20(3).png>)
+
+### Customer & Operations Insights
+
+![Customer Insights](<Readme_assets/Business-Overview%20(2).png>)
+
+### Data Quality & Risk Highlights
+
+![Data Quality](<Readme_assets/Business-Overview%20(1).png>)
+
+### Business Overview (Full Size)
+
+![Business Overview Full](Readme_assets/Business-Overview.png)
+
+### Machine Learning Results
+
+![ML Results](Readme_assets/ML-Results.png)
+
+---
+
 ## 📈 Core Features
 
 ### 1️⃣ Business KPIs
