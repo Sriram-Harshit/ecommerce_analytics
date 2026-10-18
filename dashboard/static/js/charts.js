@@ -1,249 +1,278 @@
+/**
+ * ENTERPRISE E-COMMERCE ANALYTICS CHARTS & SIMULATOR ENGINE
+ */
+
 document.addEventListener("DOMContentLoaded", function () {
-  renderOrdersOverTime();
-  renderRevenueByCategory();
-  renderDeliveryDelay();
-  renderTopSellers();
-  calculate_aov_over_time();
+  // Initialize charts safely if their respective elements exist
+  initOrdersTimeChart();
+  initRevenueCategoryChart();
+  initDeliveryDelayChart();
+  initAovChart();
+  initTopSellersChart();
+  initMLSimulator();
 });
 
-/* ======================================
-   THEME COLORS (Dark Dashboard)
-====================================== */
-const THEME = {
-  yellow: "#ffc107",
-  yellowSoft: "rgba(255,193,7,0.18)",
-
-  blue: "#4dabf7",
-  blueSoft: "rgba(77,171,247,0.25)",
-
-  green: "#2bff88",
-  greenSoft: "rgba(43,255,136,0.25)",
-
-  red: "#ff4d4f",
-  redSoft: "rgba(255,77,79,0.25)",
-
-  orange: "#ff922b",
-  purple: "#845ef7",
-
-  grid: "rgba(255,255,255,0.05)",
-  textMuted: "#adb5bd",
-  textMain: "#e9ecef",
+/* =========================================================
+   THEME PALETTE & UTILITIES
+   ========================================================= */
+const PALETTE = {
+  primary: "#6366f1",
+  primarySoft: "rgba(99, 102, 241, 0.18)",
+  cyan: "#06b6d4",
+  cyanSoft: "rgba(6, 182, 212, 0.18)",
+  emerald: "#10b981",
+  emeraldSoft: "rgba(16, 185, 129, 0.18)",
+  amber: "#f59e0b",
+  amberSoft: "rgba(245, 158, 11, 0.18)",
+  rose: "#f43f5e",
+  roseSoft: "rgba(244, 63, 94, 0.18)",
+  purple: "#a855f7",
+  grid: "rgba(255, 255, 255, 0.05)",
+  textMuted: "#94a3b8",
+  textMain: "#f8fafc",
 };
 
-/* ======================================
-   UTILITIES
-====================================== */
-function getJsonData(id) {
-  const el = document.getElementById(id);
-  return el ? JSON.parse(el.textContent) : null;
+function getJsonPayload(elementId) {
+  const el = document.getElementById(elementId);
+  if (!el) return null;
+  try {
+    return JSON.parse(el.textContent);
+  } catch (e) {
+    console.warn("Failed to parse JSON payload for", elementId, e);
+    return null;
+  }
 }
 
-function formatLabel(text) {
-  return text.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
+function formatBRL(value) {
+  return "R$ " + Number(value).toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 }
 
-function shortenLabel(text, maxLength = 7) {
-  const formatted = formatLabel(text);
-  return formatted.length > maxLength
-    ? formatted.slice(0, maxLength) + "…"
-    : formatted;
-}
-
-function formatSeller(id) {
-  return `Seller ${id.slice(0, 6).toUpperCase()}`;
-}
-
-function darkAxis() {
+function getCommonChartOptions() {
   return {
-    ticks: { color: THEME.textMuted },
-    grid: { color: THEME.grid },
+    responsive: true,
+    maintainAspectRatio: false,
+    animation: { duration: 600, easing: "easeOutQuart" },
+    plugins: {
+      legend: {
+        labels: {
+          color: PALETTE.textMain,
+          font: { family: "'Plus Jakarta Sans', sans-serif", size: 12 },
+        },
+      },
+      tooltip: {
+        backgroundColor: "rgba(15, 23, 42, 0.95)",
+        titleColor: "#ffffff",
+        bodyColor: "#e2e8f0",
+        borderColor: "rgba(255, 255, 255, 0.1)",
+        borderWidth: 1,
+        padding: 10,
+        boxPadding: 4,
+        cornerRadius: 8,
+      },
+    },
+    scales: {
+      x: {
+        ticks: { color: PALETTE.textMuted, font: { size: 11 } },
+        grid: { color: PALETTE.grid },
+      },
+      y: {
+        ticks: { color: PALETTE.textMuted, font: { size: 11 } },
+        grid: { color: PALETTE.grid },
+      },
+    },
   };
 }
 
-function interactionConfig() {
-  return {
-    interaction: {
-      mode: "nearest",
-      intersect: false,
-    },
-    hover: {
-      mode: "nearest",
-      intersect: false,
-    },
-    animation: {
-      duration: 100,
-    },
-  };
-}
-/* ======================================
-   ORDERS OVER TIME (LINE)
-====================================== */
-const renderOrdersOverTime = () => {
-  const rawData = getJsonData("orders-time-data");
-  if (!rawData) return;
+/* =========================================================
+   1. ORDER VOLUME TREND (BY YEAR)
+   ========================================================= */
+function initOrdersTimeChart() {
+  const canvas = document.getElementById("ordersTimeChart");
+  const rawData = getJsonPayload("orders-time-data");
+  if (!canvas || !rawData) return;
 
   const years = [...new Set(rawData.map((d) => d.year))].sort();
-  let currentYearIndex = years.length - 1;
+  let activeYear = years[years.length - 1]; // Default to latest year
+  let chartInstance = null;
 
-  const ctx = document.getElementById("ordersTimeChart");
-  const yearLabel = document.getElementById("currentYear");
-  let chart = null;
+  const navContainer = document.getElementById("yearNavContainer");
+  if (navContainer) {
+    navContainer.innerHTML = "";
+    years.forEach((yr) => {
+      const btn = document.createElement("button");
+      btn.className = `year-btn ${yr === activeYear ? "active" : ""}`;
+      btn.textContent = yr;
+      btn.onclick = () => {
+        document.querySelectorAll(".year-btn").forEach((b) => b.classList.remove("active"));
+        btn.classList.add("active");
+        activeYear = yr;
+        renderYear(activeYear);
+      };
+      navContainer.appendChild(btn);
+    });
+  }
 
-  function draw(year) {
-    const filtered = rawData.filter((d) => d.year === year);
+  function renderYear(year) {
+    const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+    const yearRecords = rawData.filter((d) => d.year === year);
+    
+    // Fill all 12 months cleanly
+    const monthMap = {};
+    yearRecords.forEach((d) => { monthMap[d.month] = d.order_count; });
 
-    const labels = filtered.map((d) =>
-      new Date(year, d.month - 1).toLocaleString("en", { month: "short" })
-    );
+    const labels = monthNames;
+    const values = monthNames.map((_, idx) => monthMap[idx + 1] || 0);
 
-    const values = filtered.map((d) => d.order_count);
-    yearLabel.textContent = year;
+    if (chartInstance) chartInstance.destroy();
 
-    if (chart) chart.destroy();
+    const ctx = canvas.getContext("2d");
+    const gradient = ctx.createLinearGradient(0, 0, 0, 300);
+    gradient.addColorStop(0, "rgba(99, 102, 241, 0.45)");
+    gradient.addColorStop(1, "rgba(99, 102, 241, 0.0)");
 
-    chart = new Chart(ctx, {
+    chartInstance = new Chart(canvas, {
       type: "line",
       data: {
-        labels,
+        labels: labels,
         datasets: [
           {
-            label: "Orders",
+            label: `Orders in ${year}`,
             data: values,
-            borderColor: THEME.yellow,
-            backgroundColor: THEME.yellowSoft,
-            borderWidth: 2,
-            tension: 0.45,
+            borderColor: PALETTE.primary,
+            backgroundColor: gradient,
+            borderWidth: 2.5,
+            tension: 0.4,
             fill: true,
-            pointRadius: 3,
+            pointRadius: 4,
+            pointBackgroundColor: PALETTE.primary,
             pointHoverRadius: 6,
-            pointBackgroundColor: THEME.yellow,
           },
         ],
       },
       options: {
-        ...interactionConfig(),
-        responsive: true,
-        maintainAspectRatio: false,
-        scales: {
-          x: darkAxis(),
-          y: darkAxis(),
-        },
+        ...getCommonChartOptions(),
         plugins: {
-          legend: { labels: { color: THEME.textMain } },
+          ...getCommonChartOptions().plugins,
+          tooltip: {
+            ...getCommonChartOptions().plugins.tooltip,
+            callbacks: {
+              label: (ctx) => ` Orders: ${ctx.parsed.y.toLocaleString()} units`,
+            },
+          },
         },
       },
     });
   }
 
-  draw(years[currentYearIndex]);
+  renderYear(activeYear);
+}
 
-  document.getElementById("prevYear").onclick = () => {
-    if (currentYearIndex > 0) draw(years[--currentYearIndex]);
-  };
+/* =========================================================
+   2. REVENUE CONTRIBUTION BY CATEGORY (HORIZONTAL BAR)
+   ========================================================= */
+function initRevenueCategoryChart() {
+  const canvas = document.getElementById("revenueChart");
+  const rawLabels = getJsonPayload("rev-cat-labels");
+  const values = getJsonPayload("rev-cat-values");
+  if (!canvas || !rawLabels || !values) return;
 
-  document.getElementById("nextYear").onclick = () => {
-    if (currentYearIndex < years.length - 1) draw(years[++currentYearIndex]);
-  };
-};
+  // 10 distinct gradient-inspired hues
+  const colors = [
+    "#6366f1", "#06b6d4", "#10b981", "#f59e0b", "#ec4899",
+    "#8b5cf6", "#3b82f6", "#14b8a6", "#f97316", "#a855f7"
+  ];
 
-/* ======================================
-   REVENUE BY CATEGORY (BAR)
-====================================== */
-const renderRevenueByCategory = () => {
-  const rawLabels = getJsonData("rev-cat-labels");
-  const values = getJsonData("rev-cat-values");
-  if (!rawLabels || !values) return;
+  const shortLabels = rawLabels.map((l) => (l.length > 16 ? l.slice(0, 16) + "…" : l));
 
-  const labels = rawLabels.map((l) => shortenLabel(l));
-
-  new Chart(document.getElementById("revenueChart"), {
+  new Chart(canvas, {
     type: "bar",
     data: {
-      labels,
+      labels: shortLabels,
       datasets: [
         {
-          label: "Revenue",
+          label: "Product Revenue",
           data: values,
-          backgroundColor: [
-            THEME.blue,
-            THEME.green,
-            THEME.yellow,
-            THEME.orange,
-            THEME.purple,
-            "#ff6b6b",
-            "#20c997",
-            "#74c0fc",
-          ],
-          borderRadius: 8,
-          barThickness: 18,
+          backgroundColor: colors.slice(0, values.length),
+          borderRadius: 6,
+          barThickness: 16,
         },
       ],
     },
     options: {
+      ...getCommonChartOptions(),
       indexAxis: "y",
-      responsive: true,
-      maintainAspectRatio: false,
-      ...interactionConfig(),
-
       scales: {
         x: {
-          ...darkAxis(),
           ticks: {
-            color: THEME.textMuted,
-            callback: (v) => "₹" + v.toLocaleString(),
+            color: PALETTE.textMuted,
+            callback: (v) => formatBRL(v),
           },
+          grid: { color: PALETTE.grid },
+        },
+        y: {
+          ticks: { color: PALETTE.textMain, font: { weight: "500" } },
           grid: { display: false },
         },
-        y: darkAxis(),
       },
       plugins: {
+        legend: { display: false },
         tooltip: {
+          ...getCommonChartOptions().plugins.tooltip,
           callbacks: {
-            title: (items) => formatLabel(rawLabels[items[0].dataIndex]),
-            label: (ctx) => `₹${ctx.parsed.x.toLocaleString()}`,
+            title: (items) => rawLabels[items[0].dataIndex],
+            label: (ctx) => ` Gross Sales: ${formatBRL(ctx.parsed.x)}`,
           },
         },
       },
     },
   });
-};
+}
 
-/* ======================================
-   DELIVERY DELAY (DOUGHNUT)
-====================================== */
-const renderDeliveryDelay = () => {
-  const labels = getJsonData("delay-labels");
-  const values = getJsonData("delay-values");
-  if (!labels || !values) return;
+/* =========================================================
+   3. DELIVERY PERFORMANCE BREAKDOWN (DOUGHNUT)
+   ========================================================= */
+function initDeliveryDelayChart() {
+  const canvas = document.getElementById("delayChart");
+  const labels = getJsonPayload("delay-labels");
+  const values = getJsonPayload("delay-values");
+  if (!canvas || !labels || !values) return;
 
-  new Chart(document.getElementById("delayChart"), {
+  const total = values.reduce((a, b) => a + b, 0);
+  const onTimeRatio = total > 0 ? (((values[0] + values[1]) / total) * 100).toFixed(1) : 0;
+
+  new Chart(canvas, {
     type: "doughnut",
     data: {
-      labels,
+      labels: labels,
       datasets: [
         {
           data: values,
-          backgroundColor: [THEME.green, THEME.blue, THEME.red],
+          backgroundColor: [PALETTE.emerald, PALETTE.cyan, PALETTE.rose],
           borderWidth: 0,
           hoverOffset: 8,
-          cutout: "65%",
+          cutout: "70%",
         },
       ],
     },
     plugins: [
       {
-        id: "centerText",
+        id: "centerStatusText",
         beforeDraw(chart) {
           const { ctx, chartArea } = chart;
+          if (!chartArea) return;
           const x = (chartArea.left + chartArea.right) / 2;
           const y = (chartArea.top + chartArea.bottom) / 2;
 
           ctx.save();
-          ctx.fillStyle = THEME.yellow;
-          ctx.font = "600 18px system-ui";
+          ctx.fillStyle = "#ffffff";
+          ctx.font = "700 20px 'Outfit', sans-serif";
           ctx.textAlign = "center";
           ctx.textBaseline = "middle";
-          ctx.fillText("Deliveries", x, y);
+          ctx.fillText(`${onTimeRatio}%`, x, y - 8);
+
+          ctx.fillStyle = PALETTE.textMuted;
+          ctx.font = "500 11px 'Plus Jakarta Sans', sans-serif";
+          ctx.fillText("SLA Met", x, y + 14);
           ctx.restore();
         },
       },
@@ -251,147 +280,202 @@ const renderDeliveryDelay = () => {
     options: {
       responsive: true,
       maintainAspectRatio: false,
-      ...interactionConfig(),
-
       plugins: {
         legend: {
           position: "bottom",
           labels: {
-            color: THEME.textMain,
+            color: PALETTE.textMain,
             usePointStyle: true,
+            padding: 14,
           },
         },
         tooltip: {
+          ...getCommonChartOptions().plugins.tooltip,
           callbacks: {
             label(ctx) {
-              const total = ctx.dataset.data.reduce((a, b) => a + b, 0);
-              const percent = ((ctx.raw / total) * 100).toFixed(1);
-              return `${ctx.label}: ${percent}%`;
+              const val = ctx.raw;
+              const pct = total > 0 ? ((val / total) * 100).toFixed(1) : 0;
+              return ` ${ctx.label}: ${val.toLocaleString()} orders (${pct}%)`;
             },
           },
         },
       },
     },
   });
-};
+}
 
-/* ======================================
-   TOP SELLERS (BAR)
-====================================== */
-const renderTopSellers = () => {
-  const rawLabels = getJsonData("top-sellers-labels");
-  const values = getJsonData("top-sellers-values");
-  if (!rawLabels || !values) return;
+/* =========================================================
+   4. AVERAGE ORDER VALUE (AOV) TIMELINE
+   ========================================================= */
+function initAovChart() {
+  const canvas = document.getElementById("aovChart");
+  const labels = getJsonPayload("aov-labels");
+  const values = getJsonPayload("aov-values");
+  if (!canvas || !labels || !values) return;
 
-  const labels = rawLabels.map((id) => formatSeller(id));
+  const ctx = canvas.getContext("2d");
+  const gradient = ctx.createLinearGradient(0, 0, 0, 300);
+  gradient.addColorStop(0, "rgba(245, 158, 11, 0.35)");
+  gradient.addColorStop(1, "rgba(245, 158, 11, 0.0)");
 
-  new Chart(document.getElementById("topSellersChart"), {
-    type: "bar",
+  new Chart(canvas, {
+    type: "line",
     data: {
-      labels,
+      labels: labels,
       datasets: [
         {
-          label: "Revenue",
+          label: "AOV Trend (R$)",
           data: values,
-          backgroundColor: values.map((_, i) => {
-            const shades = [
-              THEME.yellow,
-              "#ffd43b",
-              "#ffe066",
-              "#fff3bf",
-              "#ffec99",
-              "#ffe066",
-              "#ffd43b",
-            ];
-            return shades[i] || THEME.yellow;
-          }),
-          borderRadius: 6,
+          borderColor: PALETTE.amber,
+          backgroundColor: gradient,
+          borderWidth: 2.5,
+          tension: 0.35,
+          fill: true,
+          pointRadius: 3,
+          pointBackgroundColor: PALETTE.amber,
         },
       ],
     },
     options: {
-      responsive: true,
-      maintainAspectRatio: false,
-      ...interactionConfig(),
+      ...getCommonChartOptions(),
+      scales: {
+        x: {
+          ticks: { color: PALETTE.textMuted, maxRotation: 45, minRotation: 45 },
+          grid: { color: PALETTE.grid },
+        },
+        y: {
+          ticks: {
+            color: PALETTE.textMuted,
+            callback: (v) => formatBRL(v),
+          },
+          grid: { color: PALETTE.grid },
+        },
+      },
+      plugins: {
+        ...getCommonChartOptions().plugins,
+        tooltip: {
+          ...getCommonChartOptions().plugins.tooltip,
+          callbacks: {
+            label: (ctx) => ` Average Order Value: ${formatBRL(ctx.parsed.y)}`,
+          },
+        },
+      },
+    },
+  });
+}
+
+/* =========================================================
+   5. TOP SELLERS PERFORMANCE BAR CHART
+   ========================================================= */
+function initTopSellersChart() {
+  const canvas = document.getElementById("topSellersChart");
+  const labels = getJsonPayload("top-sellers-labels");
+  const values = getJsonPayload("top-sellers-values");
+  if (!canvas || !labels || !values) return;
+
+  new Chart(canvas, {
+    type: "bar",
+    data: {
+      labels: labels,
+      datasets: [
+        {
+          label: "Seller Gross Revenue",
+          data: values,
+          backgroundColor: [PALETTE.primary, PALETTE.cyan, PALETTE.emerald, PALETTE.amber, PALETTE.purple],
+          borderRadius: 8,
+          barThickness: 22,
+        },
+      ],
+    },
+    options: {
+      ...getCommonChartOptions(),
       plugins: {
         legend: { display: false },
         tooltip: {
+          ...getCommonChartOptions().plugins.tooltip,
           callbacks: {
-            title: (items) => `Seller ID: ${rawLabels[items[0].dataIndex]}`,
-            label: (ctx) => `Revenue: ₹${ctx.parsed.y.toLocaleString()}`,
+            label: (ctx) => ` Revenue: ${formatBRL(ctx.parsed.y)}`,
           },
         },
       },
       scales: {
-        x: darkAxis(),
-        y: darkAxis(),
-      },
-    },
-  });
-};
-
-/* ======================================
-    AOV OVER TIME (LINE)
-====================================== */
-const calculate_aov_over_time = () => {
-  const labels = getJsonData("aov-labels");
-  const values = getJsonData("aov-values");
-
-  if (!labels || !values) return;
-
-  const ctx = document.getElementById("aovChart");
-  if (!ctx) return;
-
-  new Chart(ctx, {
-    type: "line",
-    data: {
-      labels,
-      datasets: [
-        {
-          label: "Average Order Value",
-          data: values,
-
-          borderColor: THEME.orange,
-          backgroundColor: "rgba(255,146,43,0.25)",
-
-          borderWidth: 2,
-          tension: 0.45,
-          fill: true,
-
-          pointRadius: 3,
-          pointHoverRadius: 6,
-          pointBackgroundColor: THEME.orange,
-        },
-      ],
-    },
-    options: {
-      responsive: true,
-      maintainAspectRatio: false,
-      ...interactionConfig(),
-
-      scales: {
-        x: darkAxis(),
+        x: { ticks: { color: PALETTE.textMain }, grid: { display: false } },
         y: {
-          ...darkAxis(),
-          ticks: {
-            color: THEME.textMuted,
-            callback: (v) => "₹" + v.toLocaleString(),
-          },
-        },
-      },
-
-      plugins: {
-        legend: {
-          labels: {
-            color: THEME.textMain,
-          },
-        },
-        tooltip: {
-          callbacks: {
-            label: (ctx) => `AOV: ₹${ctx.parsed.y.toLocaleString()}`,
-          },
+          ticks: { color: PALETTE.textMuted, callback: (v) => formatBRL(v) },
+          grid: { color: PALETTE.grid },
         },
       },
     },
   });
-};
+}
+
+/* =========================================================
+   6. INTERACTIVE ML DELAY PREDICTION SIMULATOR
+   ========================================================= */
+function initMLSimulator() {
+  const freightInput = document.getElementById("simFreight");
+  const priceInput = document.getElementById("simPrice");
+  const itemsInput = document.getElementById("simItems");
+  const installmentsInput = document.getElementById("simInstallments");
+
+  if (!freightInput || !priceInput) return;
+
+  const freightDisplay = document.getElementById("dispFreight");
+  const priceDisplay = document.getElementById("dispPrice");
+  const itemsDisplay = document.getElementById("dispItems");
+  const installmentsDisplay = document.getElementById("dispInstallments");
+
+  const probVal = document.getElementById("simProbVal");
+  const probCircle = document.getElementById("simProbCircle");
+  const riskBadge = document.getElementById("simRiskBadge");
+  const recommendation = document.getElementById("simRecommendation");
+
+  function syncAndPredict() {
+    if (freightDisplay) freightDisplay.textContent = formatBRL(freightInput.value);
+    if (priceDisplay) priceDisplay.textContent = formatBRL(priceInput.value);
+    if (itemsDisplay) itemsDisplay.textContent = `${itemsInput.value} item(s)`;
+    if (installmentsDisplay) installmentsDisplay.textContent = `${installmentsInput.value}x`;
+
+    const payload = {
+      freight_value: parseFloat(freightInput.value),
+      price: parseFloat(priceInput.value),
+      item_count: parseInt(itemsInput.value),
+      installments: parseInt(installmentsInput.value),
+    };
+
+    fetch("/api/predict-delay/", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    })
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.probability_percent !== undefined) {
+          if (probVal) probVal.textContent = `${data.probability_percent}%`;
+          if (riskBadge) {
+            riskBadge.textContent = data.risk_level;
+            riskBadge.className = `risk-badge badge-${data.badge_class}`;
+          }
+          if (probCircle) {
+            probCircle.className = `probability-circle ${data.badge_class}`;
+          }
+          if (recommendation) {
+            recommendation.textContent = data.recommendation;
+          }
+        }
+      })
+      .catch((err) => console.error("Simulator API error:", err));
+  }
+
+  // Bind debounced listener
+  let debounceTimer = null;
+  [freightInput, priceInput, itemsInput, installmentsInput].forEach((input) => {
+    input.addEventListener("input", () => {
+      clearTimeout(debounceTimer);
+      debounceTimer = setTimeout(syncAndPredict, 120);
+    });
+  });
+
+  // Initial trigger
+  syncAndPredict();
+}

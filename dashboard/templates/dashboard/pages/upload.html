@@ -1,31 +1,159 @@
-{% extends "dashboard/base.html" %} 
+{% extends "dashboard/base.html" %}
+{% load static %}
 
-{% load static %} 
-
-{% block title %}Upload Data{% endblock %} 
+{% block title %}Dataset Ingestion & Validation | OmniAnalytics{% endblock %}
 
 {% block extra_css %}
-<link rel="stylesheet" href="{% static '/css/upload.css' %}" />
-{% endblock %} {% block body %}
+<link rel="stylesheet" href="{% static 'css/upload.css' %}" />
+{% endblock %}
 
-<h2 class="mb-4">Upload Dataset</h2>
+{% block body %}
 
-<div class="upload-card">
-  <form method="post" enctype="multipart/form-data">
+<!-- =========================================================
+     PAGE HEADER
+     ========================================================= -->
+<div class="page-header-container">
+  <div>
+    <h2 class="page-title">Dataset Ingestion & Schema Inspector</h2>
+    <p class="page-subtitle">Upload custom e-commerce CSV files to validate schema, preview records, and inspect data quality</p>
+  </div>
+  <a href="{% url 'dashboard' %}" class="btn-outline-glass">
+    <span>←</span> Back to Dashboard
+  </a>
+</div>
+
+<!-- =========================================================
+     DRAG & DROP CSV UPLOAD FORM
+     ========================================================= -->
+<div class="glass-card mb-4">
+  <form method="post" enctype="multipart/form-data" id="uploadForm">
     {% csrf_token %}
 
-    <div class="mb-3">
-      <label class="form-label">Upload CSV Dataset</label>
+    <div class="upload-zone" id="dropZone">
       <input
         type="file"
-        class="form-control"
+        class="file-input-hidden"
         name="file"
+        id="fileInput"
         accept=".csv"
         required
       />
+      <div class="upload-icon-circle">📤</div>
+      <h4 class="upload-title" id="uploadTitle">Drop your CSV dataset here</h4>
+      <p class="upload-desc" id="uploadDesc">
+        Supports Olist dataset tables, orders, items, or custom transactional CSV files. Maximum size: 50MB.
+      </p>
+      <button type="button" class="btn-primary-gradient" onclick="document.getElementById('fileInput').click()">
+        Browse Files
+      </button>
     </div>
 
-    <button type="submit" class="btn btn-warning">Upload & Analyze</button>
+    <div class="d-flex justify-content-end">
+      <button type="submit" class="btn-primary-gradient px-4 py-2" id="submitBtn" style="display: none;">
+        <span>🚀</span> Upload & Analyze File
+      </button>
+    </div>
   </form>
 </div>
+
+<!-- =========================================================
+     UPLOAD VALIDATION RESULTS & PREVIEW
+     ========================================================= -->
+{% if upload_result %}
+  {% if upload_result.success %}
+    <div class="alert alert-success d-flex align-items-center gap-2 mb-4" style="background: rgba(16, 185, 129, 0.15); border: 1px solid rgba(16, 185, 129, 0.3); color: #34d399; border-radius: 12px;">
+      <span>✔</span>
+      <div>
+        <strong>File Ingested Successfully!</strong> Parsed <code>{{ upload_result.file_name }}</code> with {{ upload_result.rows }} rows and {{ upload_result.columns }} schema attributes.
+      </div>
+    </div>
+
+    <!-- Stat Cards -->
+    <div class="upload-stat-grid">
+      <div class="upload-stat-card">
+        <div class="label">Total Records (Rows)</div>
+        <div class="num">{{ upload_result.rows }}</div>
+      </div>
+      <div class="upload-stat-card">
+        <div class="label">Schema Columns</div>
+        <div class="num">{{ upload_result.columns }}</div>
+      </div>
+      <div class="upload-stat-card">
+        <div class="label">Duplicate Rows</div>
+        <div class="num text-success">{{ upload_result.duplicate_count }}</div>
+      </div>
+      <div class="upload-stat-card">
+        <div class="label">Columns with Missing Data</div>
+        <div class="num text-warning">{{ upload_result.missing_counts|length }}</div>
+      </div>
+    </div>
+
+    <!-- 5-Row Preview -->
+    <div class="glass-card mb-4">
+      <h5 class="fw-bold mb-1">Dataset Preview (First 5 Rows)</h5>
+      <p class="text-muted small mb-3">Structured view of attributes and values parsed by the ingestion engine</p>
+
+      <div class="preview-container">
+        <table class="preview-table">
+          <thead>
+            <tr>
+              {% for col in upload_result.columns_list %}
+                <th>{{ col }}</th>
+              {% endfor %}
+            </tr>
+          </thead>
+          <tbody>
+            {% for row in upload_result.preview_rows %}
+              <tr>
+                {% for val in row %}
+                  <td>{{ val }}</td>
+                {% endfor %}
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  {% else %}
+    <div class="alert alert-danger" style="background: rgba(244, 63, 94, 0.15); border: 1px solid rgba(244, 63, 94, 0.3); color: #fb7185; border-radius: 12px;">
+      <strong>Upload Error:</strong> {{ upload_result.error }}
+    </div>
+  {% endif %}
+{% endif %}
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  const fileInput = document.getElementById("fileInput");
+  const uploadTitle = document.getElementById("uploadTitle");
+  const uploadDesc = document.getElementById("uploadDesc");
+  const submitBtn = document.getElementById("submitBtn");
+  const dropZone = document.getElementById("dropZone");
+
+  fileInput.addEventListener("change", function () {
+    if (fileInput.files.length > 0) {
+      const name = fileInput.files[0].name;
+      const sizeMb = (fileInput.files[0].size / (1024 * 1024)).toFixed(2);
+      uploadTitle.textContent = `Selected: ${name}`;
+      uploadDesc.textContent = `File size: ${sizeMb} MB. Ready for validation and parsing.`;
+      submitBtn.style.display = "inline-flex";
+    }
+  });
+
+  ["dragover", "dragenter"].forEach((event) => {
+    dropZone.addEventListener(event, (e) => {
+      e.preventDefault();
+      dropZone.classList.add("dragover");
+    });
+  });
+
+  ["dragleave", "drop"].forEach((event) => {
+    dropZone.addEventListener(event, (e) => {
+      e.preventDefault();
+      dropZone.classList.remove("dragover");
+    });
+  });
+</script>
 {% endblock %}

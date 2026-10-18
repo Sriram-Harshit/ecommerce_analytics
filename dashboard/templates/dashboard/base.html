@@ -3,85 +3,129 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
     <!-- Favicon -->
-    <link
-      rel="icon"
-      href="{% static 'favicon.ico' %}"
-      type="image/x-icon"
-    />
+    <link rel="icon" href="{% static 'favicon.ico' %}" type="image/x-icon" />
 
-    <title>{% block title %}Analytics Dashboard{% endblock %}</title>
+    <title>{% block title %}AI E-Commerce Analytics Platform{% endblock %}</title>
 
-    <!-- ================= CSS ================= -->
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+    <!-- Bootstrap 5 CSS -->
     <link
       href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css"
       rel="stylesheet"
     />
 
-    <!-- Custom CSS -->
+    <!-- Global App Styles -->
     <link rel="stylesheet" href="{% static 'css/style.css' %}" />
 
     {% block extra_css %}{% endblock %}
 
-    <!-- ================= JS ================= -->
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
-    <!-- Bootstrap JS -->
+    <!-- Custom Chart Engine -->
+    <script src="{% static 'js/charts.js' %}" defer></script>
+  </head>
+
+  <body>
+    <!-- =========================================================
+         ENTERPRISE GLASSMORPHIC SIDEBAR
+         ========================================================= -->
+    <aside class="sidebar">
+      <div>
+        <!-- Brand Header -->
+        <div class="brand-wrapper">
+          <div class="brand-logo">EA</div>
+          <div class="brand-text">
+            <h4>OmniAnalytics</h4>
+            <span>AI Intelligence</span>
+          </div>
+        </div>
+
+        <!-- Navigation Links -->
+        <nav class="sidebar-nav">
+          <div class="nav-section-title">Core Modules</div>
+
+          <!-- 1. Executive Dashboard -->
+          <a
+            class="nav-link {% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}"
+            href="{% url 'dashboard' %}"
+            id="nav-dashboard"
+          >
+            <span class="nav-icon">📊</span>
+            <span class="nav-text">Executive Dashboard</span>
+          </a>
+
+          <!-- 2. ML Delay Simulator -->
+          <a
+            class="nav-link {% if request.resolver_match.url_name == 'results' or request.resolver_match.url_name == 'results_legacy' %}active{% endif %}"
+            href="{% url 'results' %}"
+            id="nav-ml"
+          >
+            <span class="nav-icon">🤖</span>
+            <span class="nav-text">ML Risk Simulator</span>
+          </a>
+
+          <!-- 3. Data Quality & Audit -->
+          <a
+            class="nav-link {% if request.resolver_match.url_name == 'data_quality' %}active{% endif %}"
+            href="{% url 'data_quality' %}"
+            id="nav-audit"
+          >
+            <span class="nav-icon">🛡️</span>
+            <span class="nav-text">Data Quality Audit</span>
+          </a>
+
+          <!-- 4. Dataset Upload -->
+          <a
+            class="nav-link {% if request.resolver_match.url_name == 'upload' or request.resolver_match.url_name == 'upload_legacy' %}active{% endif %}"
+            href="{% url 'upload' %}"
+            id="nav-upload"
+          >
+            <span class="nav-icon">📤</span>
+            <span class="nav-text">Dataset Ingestion</span>
+          </a>
+
+          <div class="nav-section-title mt-3">Reports & Exports</div>
+
+          <a class="nav-link" href="{% url 'export_kpis' %}" id="nav-export">
+            <span class="nav-icon">📥</span>
+            <span class="nav-text">Download KPI CSV</span>
+          </a>
+        </nav>
+      </div>
+
+      <!-- Footer Status Chip -->
+      <div class="sidebar-footer">
+        <div class="system-status-chip">
+          <div class="status-dot"></div>
+          <div class="status-info">
+            <span class="status-title">Live Production Pipeline</span>
+            <span class="status-sub">Olist Dataset: 99,441 Orders</span>
+          </div>
+        </div>
+      </div>
+    </aside>
+
+    <!-- =========================================================
+         MAIN APPLICATION VIEWPORT
+         ========================================================= -->
+    <main class="main-content">
+      {% block body %}{% endblock %}
+    </main>
+
+    <!-- Bootstrap 5 JS Bundle -->
     <script
       src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"
       defer
     ></script>
 
-    <!-- Chart.js -->
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-
-    <!-- Custom JS -->
-    <script src="{% static 'js/charts.js' %}" defer></script>
-
     {% block extra_js %}{% endblock %}
-  </head>
-
-  <body class="bg-dark text-light">
-
-    <!-- SIDEBAR -->
-    <nav class="sidebar p-3">
-      <h5 class="text-warning mb-4">AI Analytics</h5>
-
-      <ul class="nav flex-column gap-2">
-        <li class="nav-item">
-          <a
-            class="nav-link d-flex align-items-center gap-2 {% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}"
-            href="{% url 'dashboard' %}"
-          >
-            <img
-              src="{% static 'icons/dashboard.png' %}"
-              class="sidebar-icon"
-              alt="Dashboard"
-            />
-            Dashboard
-          </a>
-        </li>
-
-        <li class="nav-item">
-          <a
-            class="nav-link d-flex align-items-center gap-2 {% if request.resolver_match.url_name == 'results' %}active{% endif %}"
-            href="{% url 'results' %}"
-          >
-            <img
-              src="{% static 'icons/ml-research.png' %}"
-              class="sidebar-icon"
-              alt="ML"
-            />
-            ML Predictions
-          </a>
-        </li>
-      </ul>
-    </nav>
-
-    <!-- MAIN CONTENT -->
-    <main class="px-4 py-4">
-      {% block body %}{% endblock %}
-    </main>
-
   </body>
 </html>

@@ -8,7 +8,9 @@ venv/
 # Django
 db.sqlite3
 media/
+staticfiles/
 
 # OS / Editor
 .vscode/
 .DS_Store
+

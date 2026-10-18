@@ -1,59 +1,119 @@
-/* Card container */
-.upload-card {
-  max-width: 520px;
-  background: linear-gradient(145deg, #0b0b0b, #000);
-  border-radius: 14px;
-  padding: 30px;
-  border: 1px solid #1f1f1f;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.6),
-    inset 0 0 0 1px rgba(255, 255, 255, 0.03);
-}
+/* =========================================================
+   UPLOAD DATASET STYLES
+   ========================================================= */
 
-/* Label */
-.upload-card .form-label {
-  font-weight: 500;
-  margin-bottom: 8px;
-  color: #ddd;
-}
-
-/* File input */
-.upload-card input[type="file"] {
-  background-color: #000;
-  border: 1px solid #333;
-  color: #ccc;
-  border-radius: 8px;
-  padding: 10px;
-}
-
-/* File button */
-.upload-card input[type="file"]::file-selector-button {
-  background-color: #ffc107;
-  border: none;
-  color: #000;
-  padding: 8px 14px;
-  margin-right: 12px;
-  border-radius: 6px;
-  font-weight: 500;
+.upload-zone {
+  background: var(--surface-card);
+  backdrop-filter: blur(14px);
+  border: 2px dashed rgba(99, 102, 241, 0.4);
+  border-radius: 20px;
+  padding: 3rem 2rem;
+  text-align: center;
+  transition: all 0.25s ease;
   cursor: pointer;
-  transition: background-color 0.2s ease;
+  margin-bottom: 2rem;
+  position: relative;
 }
 
-.upload-card input[type="file"]::file-selector-button:hover {
-  background-color: #ffca2c;
+.upload-zone:hover, .upload-zone.dragover {
+  border-color: var(--accent-primary);
+  background: rgba(99, 102, 241, 0.08);
+  transform: translateY(-2px);
 }
 
-/* Focus state */
-.upload-card input[type="file"]:focus {
-  outline: none;
-  border-color: #ffc107;
-  box-shadow: 0 0 0 2px rgba(255, 193, 7, 0.25);
+.upload-icon-circle {
+  width: 68px;
+  height: 68px;
+  border-radius: 50%;
+  background: rgba(99, 102, 241, 0.15);
+  border: 1px solid rgba(99, 102, 241, 0.3);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.85rem;
+  margin-bottom: 1.25rem;
+  color: var(--accent-primary);
+  box-shadow: 0 0 25px rgba(99, 102, 241, 0.25);
 }
 
-/* Submit button */
-.upload-card button {
-  margin-top: 15px;
-  padding: 10px 18px;
-  font-weight: 500;
-  border-radius: 8px;
-  box-shadow: 0 4px 12px rgba(255, 193, 7, 0.25);
+.upload-title {
+  font-size: 1.35rem;
+  font-weight: 700;
+  margin-bottom: 0.5rem;
+}
+
+.upload-desc {
+  color: var(--text-muted);
+  font-size: 0.875rem;
+  max-width: 450px;
+  margin: 0 auto 1.5rem auto;
+}
+
+.file-input-hidden {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  cursor: pointer;
+}
+
+/* Upload Results Section */
+.upload-stat-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 1.25rem;
+  margin-bottom: 2rem;
+}
+
+.upload-stat-card {
+  background: var(--surface-card);
+  border: 1px solid var(--border-card);
+  border-radius: 14px;
+  padding: 1.25rem;
+  text-align: center;
+}
+
+.upload-stat-card .label {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  font-weight: 600;
+  margin-bottom: 0.35rem;
+}
+
+.upload-stat-card .num {
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: #ffffff;
+}
+
+/* Dataset Preview Table */
+.preview-container {
+  overflow-x: auto;
+  border-radius: 12px;
+  border: 1px solid var(--border-card);
+}
+
+.preview-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.8rem;
+  white-space: nowrap;
+}
+
+.preview-table th {
+  background: rgba(255, 255, 255, 0.05);
+  padding: 0.75rem 1rem;
+  color: var(--text-muted);
+  font-weight: 600;
+  text-align: left;
+  border-bottom: 1px solid var(--border-card);
+}
+
+.preview-table td {
+  padding: 0.65rem 1rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+  color: #e2e8f0;
 }

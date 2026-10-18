@@ -1,131 +1,288 @@
 {% extends "dashboard/base.html" %}
 {% load static %}
 
-{% block title %}ML Results{% endblock %}
+{% block title %}Explainable ML Delay Simulator | OmniAnalytics{% endblock %}
 
 {% block extra_css %}
-<link rel="stylesheet" href="{% static 'css/results.css' %}">
+<link rel="stylesheet" href="{% static 'css/results.css' %}" />
 {% endblock %}
 
 {% block body %}
 
-<div class="container-fluid">
+<!-- =========================================================
+     PAGE HEADER
+     ========================================================= -->
+<div class="page-header-container">
+  <div>
+    <h2 class="page-title">Explainable Machine Learning Simulator</h2>
+    <p class="page-subtitle">Predictive delay classification, interactive inference playground, and model interpretability</p>
+  </div>
+  <div>
+    <span class="badge-soft badge-soft-primary" style="font-size: 0.85rem; padding: 0.5rem 0.9rem;">
+      Algorithm: {{ ml.model_name }}
+    </span>
+  </div>
+</div>
 
-  <!-- =========================
-       TOP ML SECTION (GLOW BG)
-       ========================= -->
-  <div class="ml-top-section">
-
-    <!-- PAGE TITLE -->
-    <div class="mb-4">
-      <h2 class="fw-bold">ML Results: Delivery Delay Prediction</h2>
-      <p class="text-muted">
-        Explainable machine learning model for predicting late deliveries
+<!-- =========================================================
+     INTERACTIVE ML SIMULATION PLAYGROUND (SHOWCASE FEATURE)
+     ========================================================= -->
+<div class="simulator-card">
+  <div class="simulator-header">
+    <div>
+      <h4 class="simulator-title">
+        <span>⚡</span> Live Order Delay Risk Simulator
+      </h4>
+      <p class="text-muted small mb-0">
+        Adjust order parameters below to run real-time inference via the REST API
       </p>
     </div>
+    <span class="badge-soft badge-soft-success">Active Inference Pipeline</span>
+  </div>
 
-    <!-- MODEL SUMMARY -->
-    <div class="card bg-dark text-light mb-4">
-      <div class="card-body">
-        <h4 class="mb-3">Model Summary</h4>
-        <ul class="mb-0">
-          <li><strong>Model:</strong> {{ ml.model_name }}</li>
-          <li><strong>Problem Type:</strong> Binary Classification</li>
-          <li><strong>Target Variable:</strong> Delivery Delay (Yes / No)</li>
-          <li><strong>Main Feature Used:</strong> Freight Value</li>
-        </ul>
+  <div class="simulator-grid">
+    <!-- Controls (Inputs) -->
+    <div>
+      <!-- 1. Freight Value -->
+      <div class="sim-input-group">
+        <label>
+          <span>Shipping Freight Cost</span>
+          <span class="value-display" id="dispFreight">R$ 24.50</span>
+        </label>
+        <input
+          type="range"
+          id="simFreight"
+          min="5.0"
+          max="250.0"
+          step="2.5"
+          value="24.50"
+        />
+        <div class="d-flex justify-content-between text-muted small mt-1">
+          <span>R$ 5.00</span>
+          <span>R$ 250.00</span>
+        </div>
+      </div>
+
+      <!-- 2. Product Price -->
+      <div class="sim-input-group">
+        <label>
+          <span>Merchandise Order Value</span>
+          <span class="value-display" id="dispPrice">R$ 149.90</span>
+        </label>
+        <input
+          type="range"
+          id="simPrice"
+          min="10.0"
+          max="1500.0"
+          step="10.0"
+          value="149.90"
+        />
+        <div class="d-flex justify-content-between text-muted small mt-1">
+          <span>R$ 10.00</span>
+          <span>R$ 1,500.00</span>
+        </div>
+      </div>
+
+      <!-- 3. Items Count -->
+      <div class="sim-input-group">
+        <label>
+          <span>Package Item Quantity</span>
+          <span class="value-display" id="dispItems">2 item(s)</span>
+        </label>
+        <input
+          type="range"
+          id="simItems"
+          min="1"
+          max="12"
+          step="1"
+          value="2"
+        />
+        <div class="d-flex justify-content-between text-muted small mt-1">
+          <span>1 item</span>
+          <span>12 items</span>
+        </div>
+      </div>
+
+      <!-- 4. Installments -->
+      <div class="sim-input-group mb-0">
+        <label>
+          <span>Payment Installments</span>
+          <span class="value-display" id="dispInstallments">3x</span>
+        </label>
+        <input
+          type="range"
+          id="simInstallments"
+          min="1"
+          max="24"
+          step="1"
+          value="3"
+        />
+        <div class="d-flex justify-content-between text-muted small mt-1">
+          <span>1 installment</span>
+          <span>24 installments</span>
+        </div>
       </div>
     </div>
 
-    <!-- METRICS -->
-    <div class="row mb-4">
-      <div class="col-md-4">
-        <div class="card bg-secondary text-light text-center">
-          <div class="card-body">
-            <h6>Accuracy</h6>
-            <h3>{{ ml.accuracy }}</h3>
-          </div>
-        </div>
+    <!-- Output Probability Gauge -->
+    <div class="prediction-result-box">
+      <div class="probability-circle" id="simProbCircle">
+        <div class="probability-val" id="simProbVal">--%</div>
+        <div class="probability-sub">Delay Prob</div>
       </div>
 
-      <div class="col-md-4">
-        <div class="card bg-secondary text-light text-center">
-          <div class="card-body">
-            <h6>Precision (Delayed)</h6>
-            <h3>{{ ml.precision }}</h3>
-          </div>
-        </div>
-      </div>
+      <div class="risk-badge badge-warning" id="simRiskBadge">Evaluating...</div>
 
-      <div class="col-md-4">
-        <div class="card bg-secondary text-light text-center">
-          <div class="card-body">
-            <h6>Recall (Delayed)</h6>
-            <h3>{{ ml.recall }}</h3>
-          </div>
-        </div>
-      </div>
+      <p class="sim-recommendation" id="simRecommendation">
+        Adjust the sliders to simulate delivery delay risk for arbitrary orders.
+      </p>
     </div>
+  </div>
+</div>
 
-    <!-- CONFUSION MATRIX -->
-    <div class="card bg-dark text-light mb-4">
-      <div class="card-body">
-        <h4 class="mb-3">Confusion Matrix</h4>
-        <table class="table table-dark table-bordered text-center">
-          <tr>
-            <th></th>
-            <th>Predicted On-Time</th>
-            <th>Predicted Delayed</th>
-          </tr>
-          <tr>
-            <th>Actual On-Time</th>
-            <td>{{ ml.confusion_matrix.tn }}</td>
-            <td>{{ ml.confusion_matrix.fp }}</td>
-          </tr>
-          <tr>
-            <th>Actual Delayed</th>
-            <td>{{ ml.confusion_matrix.fn }}</td>
-            <td>{{ ml.confusion_matrix.tp }}</td>
-          </tr>
+<!-- =========================================================
+     MODEL EVALUATION METRICS
+     ========================================================= -->
+<h4 class="mb-3 fw-bold">Statistical Performance Metrics</h4>
+
+<div class="metric-grid">
+  <!-- Accuracy -->
+  <div class="metric-card">
+    <div class="title">Overall Accuracy</div>
+    <div class="value">{{ ml.accuracy }}</div>
+    <div class="caption">Test dataset (20%)</div>
+  </div>
+
+  <!-- ROC-AUC -->
+  <div class="metric-card">
+    <div class="title">ROC-AUC Score</div>
+    <div class="value text-info">{{ ml.roc_auc }}</div>
+    <div class="caption">Discrimination capacity</div>
+  </div>
+
+  <!-- Recall -->
+  <div class="metric-card">
+    <div class="title">Late Order Recall</div>
+    <div class="value text-warning">{{ ml.recall }}</div>
+    <div class="caption">Class-balanced sensitivity</div>
+  </div>
+
+  <!-- Precision -->
+  <div class="metric-card">
+    <div class="title">Precision</div>
+    <div class="value">{{ ml.precision }}</div>
+    <div class="caption">Positive predictive value</div>
+  </div>
+
+  <!-- F1 Score -->
+  <div class="metric-card">
+    <div class="title">F1 Harmonized</div>
+    <div class="value">{{ ml.f1_score }}</div>
+    <div class="caption">Balanced metric</div>
+  </div>
+</div>
+
+<!-- =========================================================
+     CONFUSION MATRIX & FEATURE IMPORTANCE
+     ========================================================= -->
+<div class="row g-4 mb-4">
+  <!-- Confusion Matrix -->
+  <div class="col-12 col-lg-6">
+    <div class="glass-card h-100">
+      <h5 class="fw-bold mb-1">Confusion Matrix (Validation Test Set)</h5>
+      <p class="text-muted small mb-3">Actual fulfillment status vs model binary classification</p>
+
+      <table class="cm-table">
+        <tr>
+          <th></th>
+          <th class="text-muted small">PREDICTED ON-TIME</th>
+          <th class="text-muted small">PREDICTED DELAYED</th>
+        </tr>
+        <tr>
+          <th class="text-muted small" style="text-align: right; padding-right: 10px;">ACTUAL ON-TIME</th>
+          <td class="cm-cell cm-correct">
+            {{ ml.confusion_matrix.tn|floatformat:"0g" }}
+            <span class="cm-label">True Negative</span>
+          </td>
+          <td class="cm-cell cm-error">
+            {{ ml.confusion_matrix.fp|floatformat:"0g" }}
+            <span class="cm-label">False Positive</span>
+          </td>
+        </tr>
+        <tr>
+          <th class="text-muted small" style="text-align: right; padding-right: 10px;">ACTUAL DELAYED</th>
+          <td class="cm-cell cm-error">
+            {{ ml.confusion_matrix.fn|floatformat:"0g" }}
+            <span class="cm-label">False Negative</span>
+          </td>
+          <td class="cm-cell cm-correct">
+            {{ ml.confusion_matrix.tp|floatformat:"0g" }}
+            <span class="cm-label">True Positive</span>
+          </td>
+        </tr>
+      </table>
+    </div>
+  </div>
+
+  <!-- Feature Importance -->
+  <div class="col-12 col-lg-6">
+    <div class="glass-card h-100">
+      <h5 class="fw-bold mb-1">Feature Importance & Relative Weights</h5>
+      <p class="text-muted small mb-3">Standardized logistic regression model coefficients</p>
+
+      <div class="table-responsive">
+        <table class="custom-dark-table">
+          <thead>
+            <tr>
+              <th>Feature Name</th>
+              <th>Standardized Coefficient</th>
+              <th>Direction of Impact</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for feat, coef in ml.feature_importance.items %}
+            <tr>
+              <td><strong>{{ feat }}</strong></td>
+              <td class="fw-bold {% if coef > 0 %}text-warning{% else %}text-info{% endif %}">
+                {{ coef }}
+              </td>
+              <td>
+                {% if coef > 0 %}
+                  <span class="badge-soft badge-soft-danger">↑ Increases Delay Likelihood</span>
+                {% else %}
+                  <span class="badge-soft badge-soft-success">↓ Decreases Delay Likelihood</span>
+                {% endif %}
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
         </table>
       </div>
     </div>
+  </div>
+</div>
 
-    <!-- FEATURE IMPORTANCE -->
-    <div class="card bg-dark text-light mb-4">
-      <div class="card-body">
-        <h4>Feature Importance</h4>
-        <p>
-          <strong>Freight Value Coefficient:</strong>
-          {{ ml.feature_importance.freight_value }}
-        </p>
-      </div>
+<!-- =========================================================
+     BUSINESS CONTEXT & ARCHITECTURE CALLOUTS
+     ========================================================= -->
+<div class="row g-4">
+  <div class="col-12 col-md-6">
+    <div class="glass-card h-100" style="border-left: 4px solid var(--accent-amber);">
+      <h6 class="fw-bold text-warning mb-2">📌 Strategic Operations Takeaway</h6>
+      <p class="small text-muted mb-0" style="line-height: 1.6;">
+        Freight cost is the single strongest positive predictor of delayed fulfillment in the Brazilian e-commerce dataset. Higher freight costs typically represent long inter-state logistics routes (e.g. from São Paulo warehouses to Northern and North-Eastern regions) which encounter greater carrier transit variability.
+      </p>
     </div>
-
-  </div> <!-- END ml-top-section -->
-
-  <!-- =========================
-       LOWER SECTION (NORMAL BG)
-       ========================= -->
-
-  <!-- BUSINESS INSIGHT -->
-  <div class="alert alert-warning">
-    <h5>Business Insight</h5>
-    <p>
-      Orders with higher freight costs are more likely to be delayed.
-    </p>
   </div>
 
-  <!-- MODEL LIMITATIONS -->
-  <div class="alert alert-info">
-    <h5>Model Limitations</h5>
-    <ul>
-      <li>Single feature model</li>
-      <li>Imbalanced dataset</li>
-      <li>Recall prioritized over precision</li>
-    </ul>
+  <div class="col-12 col-md-6">
+    <div class="glass-card h-100" style="border-left: 4px solid var(--accent-primary);">
+      <h6 class="fw-bold text-info mb-2">🧠 Machine Learning Engineering Design</h6>
+      <p class="small text-muted mb-0" style="line-height: 1.6;">
+        Due to severe class imbalance (late orders constitute ~6.8% of deliveries), standard accuracy is deceptive. This pipeline uses <code class="text-info">class_weight='balanced'</code> and <code class="text-info">StandardScaler</code> preprocessing in an automated Scikit-Learn Pipeline with in-memory caching to avoid retraining overhead on request cycles.
+      </p>
+    </div>
   </div>
-
 </div>
 
 {% endblock %}

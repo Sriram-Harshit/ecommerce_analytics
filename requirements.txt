@@ -5,3 +5,4 @@ scikit-learn
 matplotlib
 django-browser-reload
 gunicorn
+whitenoise>=6.0.0

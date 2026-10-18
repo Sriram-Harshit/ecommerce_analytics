@@ -1,0 +1,203 @@
+{% extends "dashboard/base.html" %}
+{% load static %}
+
+{% block title %}Data Quality & Integrity Audit | OmniAnalytics{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/dashboard.css' %}" />
+{% endblock %}
+
+{% block body %}
+
+<!-- =========================================================
+     PAGE HEADER
+     ========================================================= -->
+<div class="page-header-container">
+  <div>
+    <h2 class="page-title">Data Quality & Pipeline Health Audit</h2>
+    <p class="page-subtitle">Production data engineering verification, foreign key linkage diagnostics, and operational risk metrics</p>
+  </div>
+  <a href="{% url 'export_kpis' %}" class="btn-outline-glass">
+    <span>📥</span> Export Integrity Audit CSV
+  </a>
+</div>
+
+<!-- =========================================================
+     HEALTH SCORE & SUMMARY STATS
+     ========================================================= -->
+<div class="row g-4 mb-4">
+  <!-- Health Score -->
+  <div class="col-12 col-md-4">
+    <div class="glass-card text-center h-100 d-flex flex-column justify-content-center align-items-center">
+      <div class="text-muted small text-uppercase fw-bold mb-2">Overall Pipeline Health Score</div>
+      <div style="font-size: 3.25rem; font-weight: 800; color: #10b981; line-height: 1;">
+        {{ health_score.health_score }}%
+      </div>
+      <span class="badge-soft badge-soft-success mt-2">
+        Status: {{ health_score.status }}
+      </span>
+      <p class="text-muted small mt-2 mb-0">Audited across {{ health_score.audited_tables }} primary relational tables</p>
+    </div>
+  </div>
+
+  <!-- Primary Orders Dimensions -->
+  <div class="col-12 col-md-4">
+    <div class="glass-card h-100">
+      <div class="d-flex justify-content-between align-items-center mb-3">
+        <h6 class="fw-bold mb-0">Orders Table Dimensions</h6>
+        <span class="badge-soft badge-soft-primary">Core Entity</span>
+      </div>
+      <div class="d-flex justify-content-between py-2 border-bottom border-secondary border-opacity-25">
+        <span class="text-muted">Total Records (Rows):</span>
+        <strong class="text-white">{{ dataset_summary.rows|floatformat:"0g" }}</strong>
+      </div>
+      <div class="d-flex justify-content-between py-2 border-bottom border-secondary border-opacity-25">
+        <span class="text-muted">Schema Columns:</span>
+        <strong class="text-white">{{ dataset_summary.columns }}</strong>
+      </div>
+      <div class="d-flex justify-content-between py-2 border-bottom border-secondary border-opacity-25">
+        <span class="text-muted">Duplicate Records:</span>
+        <strong class="text-success">{{ duplicates.duplicate_rows }} (0.0%)</strong>
+      </div>
+      <div class="d-flex justify-content-between py-2">
+        <span class="text-muted">In-Memory Footprint:</span>
+        <strong class="text-info">{{ dataset_summary.memory_mb }} MB</strong>
+      </div>
+    </div>
+  </div>
+
+  <!-- Operational Risk Flags -->
+  <div class="col-12 col-md-4">
+    <div class="glass-card h-100">
+      <div class="d-flex justify-content-between align-items-center mb-3">
+        <h6 class="fw-bold mb-0">Operational Risk Thresholds</h6>
+        <span class="badge-soft badge-soft-primary">Live SLA</span>
+      </div>
+
+      <div class="mb-3">
+        <div class="d-flex justify-content-between mb-1">
+          <span class="small text-muted">Delivery Delay Rate:</span>
+          <span class="small fw-bold {% if risks.delay_risk_flag %}text-danger{% else %}text-success{% endif %}">
+            {{ risks.delay_rate_percent }}% (Threshold: 10%)
+          </span>
+        </div>
+        <div class="progress" style="height: 6px; background: rgba(255,255,255,0.08);">
+          <div class="progress-bar {% if risks.delay_risk_flag %}bg-danger{% else %}bg-success{% endif %}"
+               style="width: {{ risks.delay_rate_percent }}%;"></div>
+        </div>
+      </div>
+
+      <div>
+        <div class="d-flex justify-content-between mb-1">
+          <span class="small text-muted">Dissatisfied Reviews (≤ 2 Stars):</span>
+          <span class="small fw-bold {% if risks.review_risk_flag %}text-danger{% else %}text-success{% endif %}">
+            {{ risks.low_review_percent }}% (Threshold: 15%)
+          </span>
+        </div>
+        <div class="progress" style="height: 6px; background: rgba(255,255,255,0.08);">
+          <div class="progress-bar {% if risks.review_risk_flag %}bg-danger{% else %}bg-warning{% endif %}"
+               style="width: {{ risks.low_review_percent }}%;"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- =========================================================
+     RELATIONAL INTEGRITY & FOREIGN KEY CHECKS
+     ========================================================= -->
+<div class="row g-4 mb-4">
+  <div class="col-12 col-md-6">
+    <div class="glass-card h-100">
+      <div class="d-flex align-items-center gap-3">
+        <div style="font-size: 2rem;">🔗</div>
+        <div>
+          <h6 class="fw-bold mb-1">Customer Linkage Check (Foreign Key Integrity)</h6>
+          <p class="text-muted small mb-1">Checks for orders with missing customer identifiers</p>
+          {% if customer_linkage.is_healthy %}
+            <span class="badge-soft badge-soft-success">✔ 100% Referential Integrity (0 Broken Mappings)</span>
+          {% else %}
+            <span class="badge-soft badge-soft-danger">⚠ {{ customer_linkage.orders_without_customer }} Unmapped Orders</span>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-12 col-md-6">
+    <div class="glass-card h-100">
+      <div class="d-flex align-items-center gap-3">
+        <div style="font-size: 2rem;">📦</div>
+        <div>
+          <h6 class="fw-bold mb-1">Order Items Integrity (Orphaned Header Check)</h6>
+          <p class="text-muted small mb-1">Orders without associated items in the item line table</p>
+          {% if order_items_check.is_healthy %}
+            <span class="badge-soft badge-soft-primary">
+              {{ order_items_check.orders_without_items }} non-item orders ({{ order_items_check.percentage }}% cancelled/unfulfilled)
+            </span>
+          {% else %}
+            <span class="badge-soft badge-soft-danger">
+              ⚠ High unlinked order count: {{ order_items_check.orders_without_items }}
+            </span>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- =========================================================
+     MISSING VALUES REPORT TABLE
+     ========================================================= -->
+<div class="table-card">
+  <div class="chart-header mb-3">
+    <div>
+      <h5 class="chart-title">Missing Values Diagnostic (Orders Entity)</h5>
+      <div class="chart-subtitle">Null values distribution across operational lifecycle timestamps</div>
+    </div>
+  </div>
+
+  <div class="table-responsive">
+    <table class="custom-dark-table">
+      <thead>
+        <tr>
+          <th>Attribute Name</th>
+          <th>Null Records Count</th>
+          <th>Null Ratio (%)</th>
+          <th>Impact Assessment</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for row in missing_values %}
+        <tr>
+          <td><code>{{ row.column }}</code></td>
+          <td class="fw-bold">{{ row.missing_count|floatformat:"0g" }}</td>
+          <td>
+            <div class="d-flex align-items-center gap-2">
+              <span class="small">{{ row.missing_percent }}%</span>
+              <div class="progress flex-grow-1" style="height: 5px; width: 80px; background: rgba(255,255,255,0.08);">
+                <div class="progress-bar bg-warning" style="width: {{ row.missing_percent }}%;"></div>
+              </div>
+            </div>
+          </td>
+          <td>
+            {% if "delivered" in row.column %}
+              <span class="badge-soft badge-soft-primary">Orders in-transit / canceled prior to delivery</span>
+            {% elif "approved" in row.column %}
+              <span class="badge-soft badge-soft-primary">Payment pending or rejected</span>
+            {% else %}
+              <span class="badge-soft badge-soft-success">Informational attribute</span>
+            {% endif %}
+          </td>
+        </tr>
+        {% empty %}
+        <tr>
+          <td colspan="4" class="text-center text-success py-4">No missing values detected in the dataset ✔</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+{% endblock %}

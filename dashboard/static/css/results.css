@@ -1,181 +1,271 @@
-/* =========================
-   ML RESULTS PAGE STYLES
-   ========================= */
+/* =========================================================
+   ML RESULTS & INTERACTIVE SIMULATOR STYLES
+   ========================================================= */
 
-/* Page container */
-.container-fluid {
-  padding: 2rem 2.5rem;
+/* Hero Banner */
+.ml-hero-banner {
+  background: linear-gradient(135deg, rgba(30, 27, 75, 0.7) 0%, rgba(15, 23, 42, 0.85) 100%);
+  border: 1px solid rgba(99, 102, 241, 0.3);
+  border-radius: 20px;
+  padding: 2rem;
+  margin-bottom: 2rem;
+  position: relative;
+  overflow: hidden;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
 }
 
-/* Page title */
-.container-fluid h2 {
-  font-size: 1.6rem;
-  font-weight: 700;
-  letter-spacing: 0.3px;
-  color: #f5f7fa;
+.ml-hero-banner::after {
+  content: "";
+  position: absolute;
+  top: -50px;
+  right: -50px;
+  width: 250px;
+  height: 250px;
+  background: radial-gradient(circle, rgba(99, 102, 241, 0.25), transparent 70%);
+  border-radius: 50%;
+  pointer-events: none;
 }
 
-/* Subtitle */
-.container-fluid p.text-muted {
-  font-size: 0.9rem;
-  color: #9aa4b2 !important;
+/* Metric Cards */
+.metric-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 1.25rem;
+  margin-bottom: 2rem;
 }
 
-/* =========================
-   CARDS (GLOBAL)
-   ========================= */
-
-.card {
+.metric-card {
+  background: var(--surface-card);
+  backdrop-filter: blur(14px);
+  border: 1px solid var(--border-card);
   border-radius: 14px;
-  border: 1px solid rgba(255, 255, 255, 0.05);
-  background: linear-gradient(180deg, #1c2127, #171b20);
-  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.45);
+  padding: 1.25rem;
+  text-align: center;
+  transition: transform 0.2s ease, border-color 0.2s ease;
 }
 
-.card h4,
-.card h5 {
-  font-weight: 600;
-  letter-spacing: 0.3px;
-  margin-bottom: 0.75rem;
+.metric-card:hover {
+  transform: translateY(-3px);
+  border-color: rgba(99, 102, 241, 0.35);
 }
 
-/* =========================
-   MODEL SUMMARY
-   ========================= */
-
-.card ul li {
-  font-size: 0.9rem;
-  color: #d1d7e0;
-  margin-bottom: 0.35rem;
-}
-
-.card ul li strong {
-  color: #ffffff;
-}
-
-/* =========================
-   METRIC CARDS
-   ========================= */
-
-.card.bg-secondary {
-  background: linear-gradient(180deg, #2a2f36, #22262c);
-  border: none;
-}
-
-.card.bg-secondary h6 {
+.metric-card .title {
   font-size: 0.75rem;
-  letter-spacing: 0.08em;
   text-transform: uppercase;
-  color: #9aa4b2;
+  letter-spacing: 0.06em;
+  color: var(--text-muted);
+  margin-bottom: 0.5rem;
+  font-weight: 600;
+}
+
+.metric-card .value {
+  font-size: 2rem;
+  font-weight: 700;
+  color: #ffffff;
+  margin-bottom: 0.25rem;
+  line-height: 1;
+}
+
+.metric-card .caption {
+  font-size: 0.7rem;
+  color: var(--text-dim);
+}
+
+/* Interactive Simulator */
+.simulator-card {
+  background: linear-gradient(180deg, rgba(20, 27, 45, 0.8) 0%, rgba(13, 18, 32, 0.9) 100%);
+  border: 1px solid rgba(99, 102, 241, 0.35);
+  border-radius: 20px;
+  padding: 2rem;
+  box-shadow: 0 15px 40px rgba(0, 0, 0, 0.4);
+  margin-bottom: 2rem;
+}
+
+.simulator-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.5rem;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+
+.simulator-title {
+  font-size: 1.25rem;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  margin: 0;
+}
+
+.simulator-grid {
+  display: grid;
+  grid-template-columns: 1.2fr 0.8fr;
+  gap: 2rem;
+  align-items: center;
+}
+
+@media (max-width: 992px) {
+  .simulator-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.sim-input-group {
+  margin-bottom: 1.25rem;
+}
+
+.sim-input-group label {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--text-muted);
   margin-bottom: 0.4rem;
 }
 
-.card.bg-secondary h3 {
-  font-size: 2rem;
+.sim-input-group input[type="range"] {
+  width: 100%;
+  accent-color: var(--accent-primary);
+  background: rgba(255, 255, 255, 0.1);
+  height: 6px;
+  border-radius: 4px;
+  outline: none;
+}
+
+.sim-input-group .value-display {
+  color: var(--accent-cyan);
   font-weight: 700;
-  color: #ffc107;
 }
 
-/* =========================
-   CONFUSION MATRIX TABLE
-   ========================= */
-
-.table {
-  margin-bottom: 0;
+/* Prediction Result Gauge Box */
+.prediction-result-box {
+  background: rgba(0, 0, 0, 0.35);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 16px;
+  padding: 1.75rem;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 250px;
+  position: relative;
 }
 
-.table th {
-  font-size: 0.85rem;
-  font-weight: 600;
-  color: #cfd3dc;
-  background-color: rgba(255, 255, 255, 0.03);
+.probability-circle {
+  width: 110px;
+  height: 110px;
+  border-radius: 50%;
+  border: 6px solid var(--accent-primary);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 1rem;
+  box-shadow: 0 0 20px rgba(99, 102, 241, 0.3);
+  transition: all 0.3s ease;
 }
 
-.table td {
-  font-size: 0.9rem;
+.probability-circle.danger {
+  border-color: #f43f5e;
+  box-shadow: 0 0 20px rgba(244, 63, 94, 0.4);
+}
+
+.probability-circle.warning {
+  border-color: #f59e0b;
+  box-shadow: 0 0 20px rgba(245, 158, 11, 0.4);
+}
+
+.probability-circle.success {
+  border-color: #10b981;
+  box-shadow: 0 0 20px rgba(16, 185, 129, 0.4);
+}
+
+.probability-val {
+  font-size: 1.75rem;
+  font-weight: 800;
   color: #ffffff;
-  background-color: rgba(255, 255, 255, 0.02);
+  line-height: 1;
 }
 
-.table-bordered > :not(caption) > * {
-  border-color: rgba(255, 255, 255, 0.08);
-}
-
-/* =========================
-   FEATURE IMPORTANCE
-   ========================= */
-
-.card p {
-  font-size: 0.95rem;
-  color: #e4e7ec;
-}
-
-.card small {
-  font-size: 0.8rem;
-  color: #9aa4b2;
-}
-
-/* =========================
-   ALERTS (INSIGHTS)
-   ========================= */
-
-.alert {
-  border-radius: 14px;
-  border: none;
-  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.35);
-}
-
-/* Business insight */
-.alert-warning {
-  background: linear-gradient(180deg, #3a2f0b, #2d2508);
-  color: #ffe08a;
-}
-
-.alert-warning h5 {
-  color: #ffc107;
+.probability-sub {
+  font-size: 0.65rem;
+  text-transform: uppercase;
+  color: var(--text-muted);
   font-weight: 600;
+  margin-top: 3px;
 }
 
-/* Limitations */
-.alert-info {
-  background: linear-gradient(180deg, #0d2a33, #0a1f26);
-  color: #9adcf0;
-}
-
-.alert-info h5 {
-  color: #4dd0e1;
-  font-weight: 600;
-}
-
-.alert-info ul li {
-  font-size: 0.9rem;
-  margin-bottom: 0.3rem;
-}
-
-/* =========================
-   RESPONSIVE TWEAKS
-   ========================= */
-
-@media (max-width: 768px) {
-  .container-fluid {
-    padding: 1.5rem 1.2rem;
-  }
-
-  .card.bg-secondary h3 {
-    font-size: 1.6rem;
-  }
-}
-
-/* =========================
-   ML TOP SECTION BACKGROUND
-   ========================= */
-
-.ml-top-section {
-  background: linear-gradient(180deg, #151a1f, #111418);
-  padding: 2rem;
+.risk-badge {
+  padding: 0.4rem 1rem;
   border-radius: 20px;
-  margin-bottom: 2.5rem;
+  font-size: 0.8rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 0.75rem;
+}
 
-  /* performance hint */
-  transform: translateZ(0);
+.risk-badge.badge-danger {
+  background: rgba(244, 63, 94, 0.2);
+  color: #fb7185;
+  border: 1px solid rgba(244, 63, 94, 0.4);
+}
+
+.risk-badge.badge-warning {
+  background: rgba(245, 158, 11, 0.2);
+  color: #fcd34d;
+  border: 1px solid rgba(245, 158, 11, 0.4);
+}
+
+.risk-badge.badge-success {
+  background: rgba(16, 185, 129, 0.2);
+  color: #6ee7b7;
+  border: 1px solid rgba(16, 185, 129, 0.4);
+}
+
+.sim-recommendation {
+  font-size: 0.825rem;
+  color: #cbd5e1;
+  line-height: 1.5;
+  margin: 0;
+}
+
+/* Confusion Matrix Table */
+.cm-table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 6px;
+  text-align: center;
+}
+
+.cm-cell {
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid var(--border-card);
+  border-radius: 10px;
+  padding: 1.25rem 0.5rem;
+  font-weight: 700;
+  font-size: 1.25rem;
+}
+
+.cm-cell.cm-correct {
+  background: rgba(16, 185, 129, 0.12);
+  border-color: rgba(16, 185, 129, 0.3);
+  color: #34d399;
+}
+
+.cm-cell.cm-error {
+  background: rgba(244, 63, 94, 0.08);
+  border-color: rgba(244, 63, 94, 0.25);
+  color: #fb7185;
+}
+
+.cm-cell .cm-label {
+  font-size: 0.7rem;
+  font-weight: 500;
+  color: var(--text-muted);
+  display: block;
+  margin-top: 4px;
 }

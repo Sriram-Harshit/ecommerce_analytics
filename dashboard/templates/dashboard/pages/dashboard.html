@@ -1,7 +1,7 @@
 {% extends "dashboard/base.html" %}
 {% load static %}
 
-{% block title %}Business Overview{% endblock %}
+{% block title %}Executive Analytics Overview | OmniAnalytics{% endblock %}
 
 {% block extra_css %}
 <link rel="stylesheet" href="{% static 'css/dashboard.css' %}" />
@@ -9,371 +9,418 @@
 
 {% block body %}
 
-<!-- =========================
-     PAGE HEADER
-     ========================= -->
-<h2 class="tester mb-4">Business Overview</h2>
-
-<!-- =========================
-     TIER 1 : CORE BUSINESS KPIs
-     ========================= -->
-<div class="tier tier-1 mb-5">
-
-  <h4 class="tier-title mb-3">Core Business Metrics</h4>
-
-  <!-- KPI ROW -->
-  <div class="row g-4">
-
-    <div class="col-md-auto">
-      <div class="kpi-card">
-        <span>Total Orders</span>
-        <h3>{{ orders_count }}</h3>
-      </div>
-    </div>
-
-    <div class="col-md-auto">
-      <div class="kpi-card">
-        <span>Total Revenue</span>
-        <h3>R$ {{ total_revenue }}</h3>
-      </div>
-    </div>
-
-    <div class="col-md-auto">
-      <div class="kpi-card">
-        <span>Delayed Deliveries</span>
-        <h3>{{ delayed_orders }}</h3>
-      </div>
-    </div>
-
-    <div class="col-md-auto">
-      <div class="kpi-card">
-        <span>Average Customer Rating</span>
-        <h3>{{ avg_review }}</h3>
-      </div>
-    </div>
-
+<!-- =========================================================
+     PAGE HEADER & ACTIONS
+     ========================================================= -->
+<div class="page-header-container">
+  <div>
+    <h2 class="page-title">Executive Business Overview</h2>
+    <p class="page-subtitle">Real-time enterprise intelligence, operational trends, and customer lifecycle retention</p>
+  </div>
+  <div class="d-flex align-items-center gap-2">
+    <a href="{% url 'results' %}" class="btn-primary-gradient" id="btn-header-ml">
+      <span>🤖</span> Launch ML Simulator
+    </a>
+    <a href="{% url 'export_kpis' %}" class="btn-outline-glass" id="btn-header-export">
+      <span>📥</span> Export CSV
+    </a>
   </div>
 </div>
 
-<!-- =========================
-     TIER 1 : TREND & PERFORMANCE ANALYTICS
-     ========================= -->
-<div class="tier tier-1-analytics mb-5">
+<!-- =========================================================
+     TIER 1 : EXECUTIVE KPI CARDS
+     ========================================================= -->
+<div class="kpi-grid">
+  <!-- 1. Total Orders -->
+  <div class="kpi-card">
+    <div class="kpi-header">
+      <span class="kpi-title">Total Orders</span>
+      <span class="kpi-icon-pill">📦</span>
+    </div>
+    <div class="kpi-value">{{ orders_count|floatformat:"0g" }}</div>
+    <div class="kpi-footer">
+      <span class="badge-trend positive">↑ 100% Verified</span>
+      <span>Unique purchases</span>
+    </div>
+  </div>
 
-  <h4 class="tier-title mb-3">Operational Performance Trends</h4>
+  <!-- 2. Gross Revenue (GMV) -->
+  <div class="kpi-card kpi-emerald">
+    <div class="kpi-header">
+      <span class="kpi-title">Gross Revenue (GMV)</span>
+      <span class="kpi-icon-pill">💳</span>
+    </div>
+    <div class="kpi-value">R$ {{ gross_revenue|floatformat:2 }}</div>
+    <div class="kpi-footer">
+      <span class="badge-trend neutral">Net: R$ {{ product_revenue|floatformat:2 }}</span>
+      <span>Includes freight</span>
+    </div>
+  </div>
 
-  <div class="row g-4">
+  <!-- 3. Delayed Orders -->
+  <div class="kpi-card kpi-rose">
+    <div class="kpi-header">
+      <span class="kpi-title">Delayed Deliveries</span>
+      <span class="kpi-icon-pill">⏱️</span>
+    </div>
+    <div class="kpi-value">{{ delayed_orders|floatformat:"0g" }}</div>
+    <div class="kpi-footer">
+      <span class="badge-trend warning">{{ retention_insight.delay_rate }}% delay rate</span>
+      <span>Post-deadline</span>
+    </div>
+  </div>
 
-    <!-- ORDER VOLUME TREND -->
-    <div class="col-12 col-lg-7">
-      {{ orders_time_data|json_script:"orders-time-data" }}
+  <!-- 4. Review Score -->
+  <div class="kpi-card kpi-amber">
+    <div class="kpi-header">
+      <span class="kpi-title">Customer CSAT</span>
+      <span class="kpi-icon-pill">⭐</span>
+    </div>
+    <div class="kpi-value">{{ avg_review }} <span style="font-size: 1.1rem; color: var(--text-muted); font-weight: 500;">/ 5.0</span></div>
+    <div class="kpi-footer">
+      <span class="badge-trend positive">Strong Rating</span>
+      <span>Olist Reviews</span>
+    </div>
+  </div>
 
-      <div class="chart-card">
-        <div class="d-flex justify-content-between align-items-center mb-2">
-          <h6>Order Volume Trend</h6>
+  <!-- 5. Repeat Customer Rate -->
+  <div class="kpi-card">
+    <div class="kpi-header">
+      <span class="kpi-title">Repeat Buyer Rate</span>
+      <span class="kpi-icon-pill">🔄</span>
+    </div>
+    <div class="kpi-value">{{ repeat_rate }}%</div>
+    <div class="kpi-footer">
+      <span class="badge-trend neutral">Cohort: {{ retention_insight.retention_band }}</span>
+      <span>Multi-order buyers</span>
+    </div>
+  </div>
+</div>
 
-          <div class="year-nav">
-            <button id="prevYear" class="btn btn-sm btn-outline-warning">◀</button>
-            <span id="currentYear" class="mx-2 fw-bold"></span>
-            <button id="nextYear" class="btn btn-sm btn-outline-warning">▶</button>
-          </div>
+<!-- =========================================================
+     INTELLIGENT RETENTION ENGINE CALLOUT BANNER
+     ========================================================= -->
+<div class="retention-banner">
+  <div class="retention-header">
+    <h5 class="retention-title">
+      <span>💡</span> Customer Retention & Lifecycle Intelligence
+    </h5>
+    <div class="retention-driver">
+      Primary Driver: <strong>{{ retention_insight.primary_driver }}</strong>
+    </div>
+  </div>
+
+  <div class="retention-body">
+    <div class="retention-metric-box">
+      <div class="label">Retention Diagnosis</div>
+      <div class="val">{{ retention_insight.repeat_rate }}%</div>
+      <small class="text-muted">{{ retention_insight.driver_message }}</small>
+    </div>
+
+    <div class="retention-recommendation-box">
+      <strong class="d-block mb-1 text-white">Executive Action Plan:</strong>
+      {{ retention_insight.recommendation }}
+    </div>
+  </div>
+</div>
+
+<!-- =========================================================
+     TIER 1 CHARTS : PERFORMANCE & DEMAND TRENDS
+     ========================================================= -->
+<div class="row g-4 mb-4">
+  <!-- Order Volume Trend -->
+  <div class="col-12 col-xl-7">
+    {{ orders_time_data|json_script:"orders-time-data" }}
+    <div class="chart-card">
+      <div class="chart-header">
+        <div>
+          <h5 class="chart-title">Order Volume Trajectory</h5>
+          <div class="chart-subtitle">Monthly purchase volume distributed across business operating years</div>
         </div>
-
+        <div class="year-pill-group" id="yearNavContainer">
+          <!-- Dynamically populated year buttons -->
+        </div>
+      </div>
+      <div class="chart-canvas-container">
         <canvas id="ordersTimeChart"></canvas>
       </div>
     </div>
+  </div>
 
-    <!-- REVENUE CONTRIBUTION -->
-    <div class="col-12 col-lg-5">
-      {{ rev_cat_labels|json_script:"rev-cat-labels" }}
-      {{ rev_cat_values|json_script:"rev-cat-values" }}
-
-      <div class="chart-card">
-        <h6>Revenue Contribution by Category</h6>
+  <!-- Revenue by Category -->
+  <div class="col-12 col-xl-5">
+    {{ rev_cat_labels|json_script:"rev-cat-labels" }}
+    {{ rev_cat_values|json_script:"rev-cat-values" }}
+    <div class="chart-card">
+      <div class="chart-header">
+        <div>
+          <h5 class="chart-title">Revenue by Product Category</h5>
+          <div class="chart-subtitle">Top 10 revenue-generating departments (R$)</div>
+        </div>
+      </div>
+      <div class="chart-canvas-container">
         <canvas id="revenueChart"></canvas>
       </div>
     </div>
+  </div>
+</div>
 
-    <!-- DELIVERY PERFORMANCE -->
-    <div class="col-12 col-lg-4">
-      {{ delay_labels|json_script:"delay-labels" }}
-      {{ delay_values|json_script:"delay-values" }}
-
-      <div class="chart-card">
-        <h6>Delivery Performance Breakdown</h6>
+<div class="row g-4 mb-4">
+  <!-- Delivery Performance Breakdown -->
+  <div class="col-12 col-lg-4">
+    {{ delay_labels|json_script:"delay-labels" }}
+    {{ delay_values|json_script:"delay-values" }}
+    <div class="chart-card">
+      <div class="chart-header">
+        <div>
+          <h5 class="chart-title">Delivery SLA Reliability</h5>
+          <div class="chart-subtitle">Early, On-time, and Delayed fulfillment distribution</div>
+        </div>
+      </div>
+      <div class="chart-canvas-container">
         <canvas id="delayChart"></canvas>
       </div>
     </div>
+  </div>
 
-    <!-- AOV TREND -->
-    <div class="col-12 col-lg-8">
-      {{ aov_labels|json_script:"aov-labels" }}
-      {{ aov_values|json_script:"aov-values" }}
-
-      <div class="chart-card">
-        <h6>Average Order Value Trend</h6>
+  <!-- AOV Trend -->
+  <div class="col-12 col-lg-8">
+    {{ aov_labels|json_script:"aov-labels" }}
+    {{ aov_values|json_script:"aov-values" }}
+    <div class="chart-card">
+      <div class="chart-header">
+        <div>
+          <h5 class="chart-title">Average Order Value (AOV) Timeline</h5>
+          <div class="chart-subtitle">Basket size evolution per transaction over time (R$)</div>
+        </div>
+      </div>
+      <div class="chart-canvas-container">
         <canvas id="aovChart"></canvas>
       </div>
     </div>
-
   </div>
 </div>
 
-<!-- =========================
-     TIER 2 : CUSTOMER & OPERATIONS INSIGHTS
-     ========================= -->
-<div class="tier tier-2">
-
-  <h3 class="tier2-title mb-4">Customer & Operations Insights</h3>
-
-  <div class="row g-4">
-
-    <!-- CUSTOMER SEGMENTS -->
-    <div class="col-12 col-lg-6">
-      <div class="tier2-card h-100">
-        <div class="tier2-header">
-          <h5>Customer Segments Overview</h5>
-          <p>Grouping customers by purchase behavior and revenue</p>
-        </div>
-
-        <div class="table-responsive">
-          <table class="tier2-table">
-            <thead>
-              <tr>
-                <th>Segment</th>
-                <th>Customers</th>
-                <th>Orders</th>
-                <th>Revenue</th>
-              </tr>
-            </thead>
-            <tbody>
-              {% for row in customer_segments %}
-              <tr>
-                <td>{{ row.segment }}</td>
-                <td>{{ row.customers }}</td>
-                <td>{{ row.orders }}</td>
-                <td>R$ {{ row.revenue|floatformat:2 }}</td>
-              </tr>
-              {% endfor %}
-            </tbody>
-          </table>
+<!-- =========================================================
+     TIER 2 : COHORTS, OPERATIONS & LEADERBOARDS
+     ========================================================= -->
+<div class="row g-4 mb-4">
+  <!-- Top Sellers Leaderboard -->
+  <div class="col-12 col-lg-6">
+    {{ top_sellers_labels|json_script:"top-sellers-labels" }}
+    {{ top_sellers_values|json_script:"top-sellers-values" }}
+    <div class="table-card">
+      <div class="chart-header mb-3">
+        <div>
+          <h5 class="chart-title">Top Merchant Leaderboard</h5>
+          <div class="chart-subtitle">Leading sellers ranked by cumulative sales and order fulfillment</div>
         </div>
       </div>
-    </div>
 
-    <!-- SATISFACTION VS DELIVERY -->
-    <div class="col-12 col-lg-6">
-      <div class="tier2-card h-100">
-        <div class="tier2-header">
-          <h5>Customer Satisfaction vs Delivery Performance</h5>
-          <p>Impact of delivery delays on review scores</p>
-        </div>
-
-        <div class="table-responsive">
-          <table class="tier2-table">
-            <thead>
-              <tr>
-                <th>Status</th>
-                <th>Avg Review</th>
-                <th>Orders</th>
-              </tr>
-            </thead>
-            <tbody>
-              {% for row in review_delay %}
-              <tr>
-                <td>{{ row.delivery_status }}</td>
-                <td>{{ row.avg_review|floatformat:2 }}</td>
-                <td>{{ row.orders }}</td>
-              </tr>
-              {% endfor %}
-            </tbody>
-          </table>
-        </div>
+      <div class="table-responsive">
+        <table class="custom-dark-table">
+          <thead>
+            <tr>
+              <th>Rank</th>
+              <th>Seller ID</th>
+              <th>Region</th>
+              <th>Orders</th>
+              <th>Gross Revenue</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for s in top_sellers %}
+            <tr>
+              <td>
+                <span class="seller-rank-badge seller-rank-{{ forloop.counter }}">{{ forloop.counter }}</span>
+              </td>
+              <td><strong>{{ s.short_id }}</strong></td>
+              <td><span class="badge-soft badge-soft-primary">{{ s.seller_city }}, {{ s.seller_state }}</span></td>
+              <td>{{ s.orders }}</td>
+              <td class="text-success fw-bold">R$ {{ s.revenue|floatformat:2 }}</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
       </div>
     </div>
+  </div>
 
-    <!-- PAYMENT BEHAVIOR -->
-    <div class="col-12 col-lg-6">
-      <div class="tier2-card h-100">
-        <div class="tier2-header">
-          <h5>Payment Behavior Analysis</h5>
-          <p>Order volume and revenue by payment type</p>
-        </div>
-
-        <div class="table-responsive">
-          <table class="tier2-table">
-            <thead>
-              <tr>
-                <th>Payment Type</th>
-                <th>Orders</th>
-                <th>Revenue</th>
-              </tr>
-            </thead>
-            <tbody>
-              {% for row in payment_methods %}
-              <tr>
-                <td>{{ row.payment_type }}</td>
-                <td>{{ row.orders }}</td>
-                <td>R$ {{ row.revenue|floatformat:2 }}</td>
-              </tr>
-              {% endfor %}
-            </tbody>
-          </table>
+  <!-- Customer Segmentation -->
+  <div class="col-12 col-lg-6">
+    <div class="table-card">
+      <div class="chart-header mb-3">
+        <div>
+          <h5 class="chart-title">Customer Loyalty Segmentation</h5>
+          <div class="chart-subtitle">Customer distribution by purchasing frequency and cohort LTV</div>
         </div>
       </div>
-    </div>
 
-    <!-- RETENTION SUMMARY -->
-    <div class="col-12 col-lg-6">
-      <div class="tier2-card h-100 tier2-insight">
-
-        <h5>Customer Retention Summary</h5>
-
-        <span class="badge
-          {% if retention_insight.severity_score >= 3 %}
-            bg-danger
-          {% elif retention_insight.severity_score == 2 %}
-            bg-warning text-dark
-          {% else %}
-            bg-success
-          {% endif %}
-          mb-2">
-          Retention Level: {{ retention_insight.retention_band|title }}
-        </span>
-
-        <div class="insight-metric">
-          <span class="insight-label">Repeat Customer Rate</span>
-          <span class="insight-value">
-            {{ retention_insight.repeat_rate }}%
-          </span>
-        </div>
-
-        <p class="insight-text">
-          {{ retention_insight.summary_message }}
-        </p>
-
-        <p class="insight-subtext">
-          <strong>Primary Driver:</strong>
-          {{ retention_insight.primary_driver|title }}<br />
-          {{ retention_insight.driver_message }}
-        </p>
-
-        <p class="insight-subtext">
-          <strong>Recommendation:</strong>
-          {{ retention_insight.recommendation }}
-        </p>
-
+      <div class="table-responsive">
+        <table class="custom-dark-table">
+          <thead>
+            <tr>
+              <th>Cohort</th>
+              <th>Customer Base</th>
+              <th>Order Volume</th>
+              <th>Total Revenue</th>
+              <th>Cohort AOV</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for row in customer_segments %}
+            <tr>
+              <td><span class="badge-soft badge-soft-primary">{{ row.segment }}</span></td>
+              <td>{{ row.customers }}</td>
+              <td>{{ row.orders }}</td>
+              <td class="text-success fw-bold">R$ {{ row.revenue|floatformat:2 }}</td>
+              <td>R$ {{ row.aov|floatformat:2 }}</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
       </div>
     </div>
-
   </div>
 </div>
 
-<!-- ============================= -->
-<!-- Tier 4: Data Quality & Insights -->
-<!-- ============================= -->
-<!-- ============================= -->
-<!-- TIER 4 : DATA QUALITY & OPERATIONAL INSIGHTS -->
-<!-- ============================= -->
-
-<div class="row tier4-section">
-
-  <h3 class="tier2-title mb-4">
-    Data Quality & Operational Insights
-  </h3>
-
-  <!-- DATASET SUMMARY -->
-  <div class="col-12 col-md-3 mb-3">
-    <div class="tier4-card">
-      <h6>Dataset Summary</h6>
-      <p>
-        Rows:
-        <strong>{{ dataset_summary.rows }}</strong>
-      </p>
-      <p>
-        Columns:
-        <strong>{{ dataset_summary.columns }}</strong>
-      </p>
-    </div>
-  </div>
-
-  <!-- DATA QUALITY -->
-  <div class="col-12 col-md-3 mb-3">
-    <div class="tier4-card">
-      <h6>Data Quality</h6>
-
-      <p>
-        Duplicate Rows:
-        <strong>{{ duplicates.duplicate_rows }}</strong>
-      </p>
-
-      <p>
-        Orders Without Items:
-        <strong>{{ order_items_check.orders_without_items }}</strong>
-      </p>
-
-      <p>
-        Orders Without Customer:
-        <strong>{{ customer_linkage.orders_without_customer }}</strong>
-      </p>
-
-      {% if missing_values %}
-        <p class="text-danger mb-1">Missing Values</p>
-        <ul>
-          {% for col, count in missing_values.items %}
-            <li>{{ col }}: {{ count }}</li>
-          {% endfor %}
-        </ul>
-      {% else %}
-        <p class="text-success mb-0">No missing values ✔</p>
-      {% endif %}
-    </div>
-  </div>
-
-  <!-- RISK HIGHLIGHTS -->
-  <div class="col-12 col-md-3 mb-3">
-    <div class="tier4-card">
-      <h6>Risk Highlights</h6>
-
-      <div class="tier4-risk {% if risks.delay_risk_flag %}high{% else %}low{% endif %}">
-        <span>Delivery Delay Rate</span>
-        <span>
-          {{ risks.delay_rate_percent }}%
-          {% if risks.delay_risk_flag %}⚠{% endif %}
-        </span>
+<div class="row g-4 mb-4">
+  <!-- Customer CSAT vs Logistics Delays -->
+  <div class="col-12 col-lg-6">
+    <div class="table-card">
+      <div class="chart-header mb-3">
+        <div>
+          <h5 class="chart-title">Delivery SLA Impact on Review Scores</h5>
+          <div class="chart-subtitle">Direct correlation between late deliveries and customer satisfaction</div>
+        </div>
       </div>
 
-      <div class="tier4-risk {% if risks.review_risk_flag %}high{% else %}low{% endif %}">
-        <span>Low Review Rate</span>
-        <span>
-          {{ risks.low_review_percent }}%
-          {% if risks.review_risk_flag %}⚠{% endif %}
-        </span>
+      <div class="table-responsive">
+        <table class="custom-dark-table">
+          <thead>
+            <tr>
+              <th>Delivery Status</th>
+              <th>Avg Review Score</th>
+              <th>Total Orders</th>
+              <th>Customer Experience Impact</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for row in review_delay %}
+            <tr>
+              <td>
+                {% if "Delayed" in row.delivery_status %}
+                  <span class="badge-soft badge-soft-danger">⚠ {{ row.delivery_status }}</span>
+                {% else %}
+                  <span class="badge-soft badge-soft-success">✔ {{ row.delivery_status }}</span>
+                {% endif %}
+              </td>
+              <td><strong style="font-size: 1.05rem;">⭐ {{ row.avg_review }}</strong> / 5.0</td>
+              <td>{{ row.orders }}</td>
+              <td>
+                {% if "Delayed" in row.delivery_status %}
+                  <span class="text-danger small">Severe rating depression (-1.8 stars)</span>
+                {% else %}
+                  <span class="text-success small">Positive promoter sentiment</span>
+                {% endif %}
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
       </div>
     </div>
   </div>
 
-  <!-- EXPORT -->
-  <div class="col-12 col-md-3 mb-3">
-    <div class="tier4-card d-flex flex-column justify-content-between">
-      <div>
-        <h6>Export</h6>
-        <p class="tier4-helper">
-          Download KPI metrics for reporting or offline analysis.
-        </p>
+  <!-- Payment Methods Breakdown -->
+  <div class="col-12 col-lg-6">
+    <div class="table-card">
+      <div class="chart-header mb-3">
+        <div>
+          <h5 class="chart-title">Payment Method Contribution</h5>
+          <div class="chart-subtitle">Order volume and revenue distribution across payment types</div>
+        </div>
       </div>
 
-     
-      <a href="{% url 'export_kpis' %}"
-         class="btn btn-outline-warning btn-sm mt-2">
-        Download KPIs CSV
-      </a>
-      
+      <div class="table-responsive">
+        <table class="custom-dark-table">
+          <thead>
+            <tr>
+              <th>Method</th>
+              <th>Orders</th>
+              <th>Gross Revenue</th>
+              <th>Market Share</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for row in payment_methods %}
+            <tr>
+              <td><strong>{{ row.payment_type }}</strong></td>
+              <td>{{ row.orders }}</td>
+              <td class="text-success fw-bold">R$ {{ row.revenue|floatformat:2 }}</td>
+              <td>
+                <span class="badge-soft badge-soft-primary">{{ row.share_percent }}%</span>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
     </div>
   </div>
-
 </div>
 
+<!-- =========================================================
+     TIER 3 : REGIONAL GEOGRAPHIC BREAKDOWN (TOP STATES)
+     ========================================================= -->
+<div class="row g-4 mb-4">
+  <div class="col-12">
+    <div class="table-card">
+      <div class="chart-header mb-3">
+        <div>
+          <h5 class="chart-title">Top Regional Markets (By Brazilian State)</h5>
+          <div class="chart-subtitle">Geographic distribution of demand, purchasing volume, and gross sales concentration</div>
+        </div>
+        <span class="badge-soft badge-soft-primary">National Coverage</span>
+      </div>
 
+      <div class="table-responsive">
+        <table class="custom-dark-table">
+          <thead>
+            <tr>
+              <th>Rank</th>
+              <th>State</th>
+              <th>Full State Name</th>
+              <th>Total Orders</th>
+              <th>Gross Sales (R$)</th>
+              <th>National Market Share</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for st in state_sales %}
+            <tr>
+              <td>
+                <span class="seller-rank-badge seller-rank-{{ forloop.counter }}">{{ forloop.counter }}</span>
+              </td>
+              <td><span class="badge-soft badge-soft-primary fw-bold">{{ st.customer_state }}</span></td>
+              <td><strong>{{ st.state_name }}</strong></td>
+              <td>{{ st.orders|floatformat:"0g" }}</td>
+              <td class="text-success fw-bold">R$ {{ st.revenue|floatformat:2 }}</td>
+              <td>
+                <div class="d-flex align-items-center gap-2">
+                  <span class="small fw-bold" style="min-width: 45px;">{{ st.share_percent }}%</span>
+                  <div class="progress flex-grow-1" style="height: 6px; background: rgba(255,255,255,0.06); max-width: 140px;">
+                    <div class="progress-bar bg-info" style="width: {{ st.share_percent }}%;"></div>
+                  </div>
+                </div>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
 
 {% endblock %}
