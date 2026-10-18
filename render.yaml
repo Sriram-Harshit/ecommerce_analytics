@@ -4,7 +4,7 @@ services:
     env: python
     plan: free
     buildCommand: "./build.sh"
-    startCommand: "gunicorn ecommerce_analytics.wsgi:application --workers 1 --threads 2 --bind 0.0.0.0:$PORT"
+    startCommand: "gunicorn ecommerce_analytics.wsgi:application --workers 1 --threads 4 --timeout 120 --keep-alive 5 --bind 0.0.0.0:$PORT"
     envVars:
       - key: PYTHON_VERSION
         value: 3.11.9

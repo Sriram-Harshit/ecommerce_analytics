@@ -155,5 +155,21 @@
       dropZone.classList.remove("dragover");
     });
   });
+
+  const uploadForm = document.getElementById("uploadForm");
+  if (uploadForm) {
+    uploadForm.addEventListener("submit", function () {
+      if (submitBtn) {
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = `<span>⏳</span> Uploading & Analyzing...`;
+      }
+      if (window.showGlobalLoader) {
+        window.showGlobalLoader(
+          "Uploading & Ingesting Dataset...",
+          "Parsing CSV schema, checking data types, and verifying integrity"
+        );
+      }
+    });
+  }
 </script>
 {% endblock %}

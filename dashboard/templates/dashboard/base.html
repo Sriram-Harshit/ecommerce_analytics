@@ -24,6 +24,45 @@
     <!-- Global App Styles -->
     <link rel="stylesheet" href="{% static 'css/style.css' %}" />
 
+    <!-- Critical Loader Styles (Instant Render) -->
+    <style>
+      #global-progress-bar {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 0%;
+        height: 3px;
+        background: linear-gradient(90deg, #6366f1 0%, #06b6d4 50%, #10b981 100%);
+        box-shadow: 0 0 12px rgba(99, 102, 241, 0.8), 0 0 6px rgba(6, 182, 212, 0.6);
+        z-index: 100000;
+        opacity: 0;
+        pointer-events: none;
+        transition: width 0.25s ease-out, opacity 0.25s ease;
+      }
+      #global-progress-bar.active { opacity: 1; }
+      #global-loader {
+        position: fixed;
+        inset: 0;
+        width: 100vw;
+        height: 100vh;
+        background: rgba(8, 12, 21, 0.95);
+        backdrop-filter: blur(14px);
+        -webkit-backdrop-filter: blur(14px);
+        z-index: 99999;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        opacity: 1;
+        visibility: visible;
+        transition: opacity 0.35s cubic-bezier(0.16, 1, 0.3, 1), visibility 0.35s ease;
+      }
+      #global-loader.hidden {
+        opacity: 0;
+        visibility: hidden;
+        pointer-events: none;
+      }
+    </style>
+
     {% block extra_css %}{% endblock %}
 
     <!-- Chart.js -->
@@ -34,6 +73,29 @@
   </head>
 
   <body>
+    <!-- Top Progress Bar (NProgress style) -->
+    <div id="global-progress-bar"></div>
+
+    <!-- Global Glassmorphic Loading Screen -->
+    <div id="global-loader" class="global-loader">
+      <div class="loader-container">
+        <div class="loader-graphic">
+          <div class="loader-spinner-ring"></div>
+          <div class="loader-brand-icon">EA</div>
+        </div>
+        <div class="loader-app-name">OmniAnalytics</div>
+        <div class="loader-status" id="loader-status">
+          <span>Loading Workspace...</span>
+        </div>
+        <div class="loader-subtext" id="loader-subtext">
+          Initializing datasets & analytics models
+        </div>
+        <div class="loader-bar-track">
+          <div class="loader-bar-indicator"></div>
+        </div>
+      </div>
+    </div>
+
     <!-- =========================================================
          ENTERPRISE GLASSMORPHIC SIDEBAR
          ========================================================= -->
@@ -125,6 +187,173 @@
       src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"
       defer
     ></script>
+
+    <!-- Global Loader & Navigation Controller -->
+    <script>
+      (function () {
+        const loader = document.getElementById("global-loader");
+        const progressBar = document.getElementById("global-progress-bar");
+        const statusEl = document.getElementById("loader-status");
+        const subtextEl = document.getElementById("loader-subtext");
+        let progressInterval = null;
+        let progressVal = 0;
+        let coldStartTimer1 = null;
+        let coldStartTimer2 = null;
+        let safetyTimeout = null;
+
+        function setProgress(val) {
+          if (!progressBar) return;
+          progressVal = Math.min(val, 100);
+          progressBar.classList.add("active");
+          progressBar.style.width = progressVal + "%";
+        }
+
+        function startProgressBar() {
+          if (!progressBar) return;
+          setProgress(15);
+          clearInterval(progressInterval);
+          progressInterval = setInterval(function () {
+            if (progressVal < 88) {
+              const step = Math.max(0.75, (88 - progressVal) * 0.08);
+              setProgress(progressVal + step);
+            }
+          }, 200);
+        }
+
+        function finishProgressBar() {
+          if (!progressBar) return;
+          clearInterval(progressInterval);
+          setProgress(100);
+          setTimeout(function () {
+            progressBar.classList.remove("active");
+            setTimeout(function () {
+              progressBar.style.width = "0%";
+              progressVal = 0;
+            }, 300);
+          }, 200);
+        }
+
+        function show(title, subtext) {
+          if (statusEl && title) statusEl.textContent = title;
+          if (subtextEl && subtext) {
+            subtextEl.textContent = subtext;
+            subtextEl.style.color = "#94a3b8";
+          }
+          if (loader) {
+            loader.classList.remove("hidden");
+          }
+          startProgressBar();
+
+          // Clear previous cold-start timers
+          clearTimeout(coldStartTimer1);
+          clearTimeout(coldStartTimer2);
+          clearTimeout(safetyTimeout);
+
+          // Cold-start messaging (helpful on Render free tier)
+          coldStartTimer1 = setTimeout(function () {
+            if (subtextEl && loader && !loader.classList.contains("hidden")) {
+              subtextEl.textContent = "⚡ Render cloud server is waking up, initializing memory...";
+              subtextEl.style.color = "#38bdf8";
+            }
+          }, 3500);
+
+          coldStartTimer2 = setTimeout(function () {
+            if (subtextEl && loader && !loader.classList.contains("hidden")) {
+              subtextEl.textContent = "⚙️ Aggregating 99,441 records & calculating executive KPIs...";
+              subtextEl.style.color = "#fbbf24";
+            }
+          }, 8500);
+
+          // Safety timeout: never leave user locked out if navigation is canceled
+          safetyTimeout = setTimeout(function () {
+            hide();
+          }, 15000);
+        }
+
+        function hide() {
+          clearTimeout(coldStartTimer1);
+          clearTimeout(coldStartTimer2);
+          clearTimeout(safetyTimeout);
+          finishProgressBar();
+          if (loader) {
+            loader.classList.add("hidden");
+          }
+        }
+
+        window.GlobalLoader = {
+          show: show,
+          hide: hide,
+          setProgress: setProgress,
+          startProgressBar: startProgressBar,
+          finishProgressBar: finishProgressBar,
+        };
+        window.showGlobalLoader = show;
+        window.hideGlobalLoader = hide;
+
+        // Dismiss loader when page finishes loading
+        if (document.readyState === "complete") {
+          setTimeout(hide, 150);
+        } else {
+          window.addEventListener("load", function () {
+            setTimeout(hide, 200);
+          });
+        }
+
+        // Handle bfcache (browser back/forward button)
+        window.addEventListener("pageshow", function (event) {
+          if (event.persisted) {
+            hide();
+          }
+        });
+
+        // Intercept internal link clicks to display instant feedback
+        document.addEventListener("click", function (event) {
+          const link = event.target.closest("a");
+          if (!link) return;
+
+          const href = link.getAttribute("href");
+          if (!href) return;
+
+          // Skip hash anchors, external links, downloads, or JS actions
+          if (
+            href.startsWith("#") ||
+            href.startsWith("javascript:") ||
+            href.startsWith("mailto:") ||
+            link.target === "_blank" ||
+            link.hasAttribute("download") ||
+            href.includes("export_kpis") ||
+            href.includes("export-kpis") ||
+            href.includes("download")
+          ) {
+            return;
+          }
+
+          try {
+            const url = new URL(link.href, window.location.href);
+            if (url.origin === window.location.origin) {
+              if (url.pathname === window.location.pathname && url.search === window.location.search) {
+                return; // Same page
+              }
+              const linkText =
+                link.querySelector(".nav-text")?.textContent?.trim() ||
+                link.textContent?.trim() ||
+                "Module";
+              const cleanText = linkText.length > 28 ? linkText.substring(0, 25) + "..." : linkText;
+              show("Loading " + cleanText + "...", "Preparing data cache & rendering visualizations");
+            }
+          } catch (e) {
+            // Safe fallback
+          }
+        });
+
+        // Intercept form submissions
+        document.addEventListener("submit", function (event) {
+          const form = event.target;
+          if (form.target === "_blank") return;
+          show("Processing Request...", "Executing pipeline & generating analysis");
+        });
+      })();
+    </script>
 
     {% block extra_js %}{% endblock %}
   </body>
