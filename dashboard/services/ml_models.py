@@ -13,9 +13,35 @@ from sklearn.metrics import (
     roc_auc_score,
     confusion_matrix,
 )
+from pathlib import Path
+import json
+import joblib
+
+BASE_DIR = Path(__file__).resolve().parents[2]
+CACHE_DIR = BASE_DIR / "data" / "cache"
 
 # Global in-memory cache for the trained pipeline & evaluation metrics
 _TRAINED_MODEL_CACHE: Dict[str, Any] = {}
+
+
+def load_persisted_ml_cache() -> bool:
+    """Loads pre-trained model and evaluation metrics from disk cache if available."""
+    global _TRAINED_MODEL_CACHE
+    pipeline_file = CACHE_DIR / "ml_pipeline.joblib"
+    metrics_file = CACHE_DIR / "ml_metrics.json"
+
+    if pipeline_file.exists() and metrics_file.exists():
+        try:
+            pipeline = joblib.load(pipeline_file)
+            with open(metrics_file, "r", encoding="utf-8") as f:
+                metrics = json.load(f)
+            _TRAINED_MODEL_CACHE["pipeline"] = pipeline
+            _TRAINED_MODEL_CACHE["features"] = ["freight_value", "price", "item_count", "payment_installments"]
+            _TRAINED_MODEL_CACHE["metrics"] = metrics
+            return True
+        except Exception:
+            pass
+    return False
 
 
 def prepare_delay_dataset(
@@ -64,14 +90,22 @@ def prepare_delay_dataset(
     return df
 
 
-def train_delay_prediction_model(df: pd.DataFrame, force_retrain: bool = False) -> Dict[str, Any]:
+def train_delay_prediction_model(df: pd.DataFrame = None, force_retrain: bool = False) -> Dict[str, Any]:
     """
     Trains a normalized Logistic Regression classifier with class balancing.
     Caches the trained model so subsequent page loads are instantaneous.
     """
     global _TRAINED_MODEL_CACHE
-    if not force_retrain and "metrics" in _TRAINED_MODEL_CACHE:
-        return _TRAINED_MODEL_CACHE["metrics"]
+    if not force_retrain:
+        if "metrics" in _TRAINED_MODEL_CACHE:
+            return _TRAINED_MODEL_CACHE["metrics"]
+        if load_persisted_ml_cache():
+            return _TRAINED_MODEL_CACHE["metrics"]
+
+    if df is None:
+        if load_persisted_ml_cache():
+            return _TRAINED_MODEL_CACHE["metrics"]
+        raise ValueError("DataFrame must be provided when training model without existing cache.")
 
     features = ["freight_value", "price", "item_count", "payment_installments"]
     X = df[features].fillna(0)
@@ -143,6 +177,9 @@ def predict_single_order(
     Used for interactive ML simulations in the dashboard.
     """
     global _TRAINED_MODEL_CACHE
+    if "pipeline" not in _TRAINED_MODEL_CACHE:
+        load_persisted_ml_cache()
+
     pipeline = _TRAINED_MODEL_CACHE.get("pipeline")
 
     if pipeline is None:

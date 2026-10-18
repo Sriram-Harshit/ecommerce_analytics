@@ -20,29 +20,63 @@ DATASET_FILES = {
     "geolocation": "olist_geolocation_dataset.csv",
 }
 
+# Selective column loading to save over 100MB of RAM on memory-constrained servers (Render 512MB)
+DATASET_COLUMNS = {
+    "orders": [
+        "order_id",
+        "customer_id",
+        "order_purchase_timestamp",
+        "order_delivered_customer_date",
+        "order_estimated_delivery_date",
+    ],
+    "customers": ["customer_id", "customer_unique_id", "customer_state"],
+    "order_items": [
+        "order_id",
+        "order_item_id",
+        "product_id",
+        "seller_id",
+        "price",
+        "freight_value",
+    ],
+    "products": ["product_id", "product_category_name"],
+    "order_reviews": ["order_id", "review_score"],
+    "order_payments": [
+        "order_id",
+        "payment_type",
+        "payment_value",
+        "payment_installments",
+    ],
+    "sellers": ["seller_id", "seller_city", "seller_state"],
+    "category_translation": [
+        "product_category_name",
+        "product_category_name_english",
+    ],
+}
 
-def get_dataset(name: str) -> pd.DataFrame:
+
+def get_dataset(name: str, full_columns: bool = False) -> pd.DataFrame:
     """
-    Lazily loads and caches a single dataset by name.
+    Lazily loads and caches a single dataset by name with memory-optimized column selection.
     """
     if name not in _DATASET_CACHE:
         if name not in DATASET_FILES:
-            raise KeyError(f"Dataset '{name}' is not recognized. Valid: {list(DATASET_FILES.keys())}")
+            raise KeyError(
+                f"Dataset '{name}' is not recognized. Valid: {list(DATASET_FILES.keys())}"
+            )
         file_path = DATA_PATH / DATASET_FILES[name]
         if not file_path.exists():
             raise FileNotFoundError(f"Dataset file not found at {file_path}")
-        
-        # Load dataset
-        df = pd.read_csv(file_path)
+
+        cols = None if full_columns else DATASET_COLUMNS.get(name)
+        df = pd.read_csv(file_path, usecols=cols)
         _DATASET_CACHE[name] = df
-        
+
     return _DATASET_CACHE[name]
 
 
 def Load_olist_datasets(include_geolocation: bool = False) -> Dict[str, pd.DataFrame]:
     """
-    Loads all core Olist datasets.
-    Geolocation (62MB) is excluded by default for blazing-fast startup and memory efficiency.
+    Loads all core Olist datasets into memory with optimized column selection.
     """
     keys = [
         "orders",
