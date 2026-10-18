@@ -372,15 +372,55 @@ main.main-content {
   width: 0%;
   height: 3px;
   background: linear-gradient(90deg, #6366f1 0%, #06b6d4 50%, #10b981 100%);
-  box-shadow: 0 0 12px rgba(99, 102, 241, 0.8), 0 0 6px rgba(6, 182, 212, 0.6);
+  box-shadow: 0 0 14px rgba(99, 102, 241, 0.85), 0 0 6px rgba(6, 182, 212, 0.6);
   z-index: 100000;
   opacity: 0;
-  pointer-events: none;
+  pointer-events: none !important;
   transition: width 0.25s ease-out, opacity 0.25s ease;
 }
 
 .global-progress-bar.active {
   opacity: 1;
+}
+
+/* Floating Non-Blocking Loading Pill */
+.loading-pill {
+  position: fixed;
+  top: 14px;
+  left: 50%;
+  transform: translateX(-50%) translateY(0);
+  background: rgba(16, 23, 38, 0.94);
+  border: 1px solid rgba(99, 102, 241, 0.4);
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.55), 0 0 20px rgba(99, 102, 241, 0.3);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  padding: 0.45rem 1.15rem;
+  border-radius: 9999px;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.65rem;
+  font-size: 0.86rem;
+  font-weight: 600;
+  color: #f8fafc;
+  z-index: 100001;
+  pointer-events: none !important;
+  transition: opacity 0.25s ease, transform 0.25s ease, visibility 0.25s ease;
+}
+
+.loading-pill.hidden {
+  opacity: 0;
+  visibility: hidden;
+  transform: translateX(-50%) translateY(-10px);
+}
+
+.pill-spinner {
+  width: 15px;
+  height: 15px;
+  border: 2px solid rgba(255, 255, 255, 0.2);
+  border-top-color: #6366f1;
+  border-right-color: #06b6d4;
+  border-radius: 50%;
+  animation: loaderSpin 0.75s linear infinite;
 }
 
 .global-loader {

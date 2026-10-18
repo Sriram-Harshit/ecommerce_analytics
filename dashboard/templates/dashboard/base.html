@@ -33,13 +33,54 @@
         width: 0%;
         height: 3px;
         background: linear-gradient(90deg, #6366f1 0%, #06b6d4 50%, #10b981 100%);
-        box-shadow: 0 0 12px rgba(99, 102, 241, 0.8), 0 0 6px rgba(6, 182, 212, 0.6);
+        box-shadow: 0 0 14px rgba(99, 102, 241, 0.85), 0 0 6px rgba(6, 182, 212, 0.6);
         z-index: 100000;
         opacity: 0;
-        pointer-events: none;
+        pointer-events: none !important;
         transition: width 0.25s ease-out, opacity 0.25s ease;
       }
       #global-progress-bar.active { opacity: 1; }
+
+      .loading-pill {
+        position: fixed;
+        top: 14px;
+        left: 50%;
+        transform: translateX(-50%) translateY(0);
+        background: rgba(16, 23, 38, 0.94);
+        border: 1px solid rgba(99, 102, 241, 0.4);
+        box-shadow: 0 8px 30px rgba(0, 0, 0, 0.55), 0 0 20px rgba(99, 102, 241, 0.3);
+        backdrop-filter: blur(12px);
+        -webkit-backdrop-filter: blur(12px);
+        padding: 0.45rem 1.15rem;
+        border-radius: 9999px;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.65rem;
+        font-size: 0.86rem;
+        font-weight: 600;
+        color: #f8fafc;
+        z-index: 100001;
+        pointer-events: none !important;
+        transition: opacity 0.25s ease, transform 0.25s ease, visibility 0.25s ease;
+      }
+      .loading-pill.hidden {
+        opacity: 0;
+        visibility: hidden;
+        transform: translateX(-50%) translateY(-10px);
+      }
+      .pill-spinner {
+        width: 15px;
+        height: 15px;
+        border: 2px solid rgba(255, 255, 255, 0.2);
+        border-top-color: #6366f1;
+        border-right-color: #06b6d4;
+        border-radius: 50%;
+        animation: loaderSpin 0.75s linear infinite;
+      }
+      @keyframes loaderSpin {
+        to { transform: rotate(360deg); }
+      }
+
       #global-loader {
         position: fixed;
         inset: 0;
@@ -76,8 +117,14 @@
     <!-- Top Progress Bar (NProgress style) -->
     <div id="global-progress-bar"></div>
 
-    <!-- Global Glassmorphic Loading Screen -->
-    <div id="global-loader" class="global-loader">
+    <!-- Floating Non-Blocking Loading Pill -->
+    <div id="page-loading-pill" class="loading-pill hidden">
+      <span class="pill-spinner"></span>
+      <span id="pill-text">Loading...</span>
+    </div>
+
+    <!-- Global Glassmorphic Loading Screen (For uploads & heavy forms) -->
+    <div id="global-loader" class="global-loader hidden">
       <div class="loader-container">
         <div class="loader-graphic">
           <div class="loader-spinner-ring"></div>
@@ -85,10 +132,10 @@
         </div>
         <div class="loader-app-name">OmniAnalytics</div>
         <div class="loader-status" id="loader-status">
-          <span>Loading Workspace...</span>
+          <span>Processing Request...</span>
         </div>
         <div class="loader-subtext" id="loader-subtext">
-          Initializing datasets & analytics models
+          Ingesting dataset & calculating metrics
         </div>
         <div class="loader-bar-track">
           <div class="loader-bar-indicator"></div>
@@ -191,15 +238,17 @@
     <!-- Global Loader & Navigation Controller -->
     <script>
       (function () {
-        const loader = document.getElementById("global-loader");
         const progressBar = document.getElementById("global-progress-bar");
-        const statusEl = document.getElementById("loader-status");
-        const subtextEl = document.getElementById("loader-subtext");
+        const loadingPill = document.getElementById("page-loading-pill");
+        const pillText = document.getElementById("pill-text");
+        const modalLoader = document.getElementById("global-loader");
+        const modalStatus = document.getElementById("loader-status");
+        const modalSubtext = document.getElementById("loader-subtext");
+
         let progressInterval = null;
         let progressVal = 0;
         let coldStartTimer1 = null;
         let coldStartTimer2 = null;
-        let safetyTimeout = null;
 
         function setProgress(val) {
           if (!progressBar) return;
@@ -210,7 +259,7 @@
 
         function startProgressBar() {
           if (!progressBar) return;
-          setProgress(15);
+          setProgress(22);
           clearInterval(progressInterval);
           progressInterval = setInterval(function () {
             if (progressVal < 88) {
@@ -233,80 +282,79 @@
           }, 200);
         }
 
-        function show(title, subtext) {
-          if (statusEl && title) statusEl.textContent = title;
-          if (subtextEl && subtext) {
-            subtextEl.textContent = subtext;
-            subtextEl.style.color = "#94a3b8";
-          }
-          if (loader) {
-            loader.classList.remove("hidden");
-          }
+        function showPill(text) {
+          if (pillText) pillText.textContent = text || "Loading Module...";
+          if (loadingPill) loadingPill.classList.remove("hidden");
           startProgressBar();
 
-          // Clear previous cold-start timers
           clearTimeout(coldStartTimer1);
           clearTimeout(coldStartTimer2);
-          clearTimeout(safetyTimeout);
 
-          // Cold-start messaging (helpful on Render free tier)
           coldStartTimer1 = setTimeout(function () {
-            if (subtextEl && loader && !loader.classList.contains("hidden")) {
-              subtextEl.textContent = "⚡ Render cloud server is waking up, initializing memory...";
-              subtextEl.style.color = "#38bdf8";
+            if (pillText && loadingPill && !loadingPill.classList.contains("hidden")) {
+              pillText.textContent = "⚡ Warming up cloud server, almost ready...";
             }
           }, 3500);
 
           coldStartTimer2 = setTimeout(function () {
-            if (subtextEl && loader && !loader.classList.contains("hidden")) {
-              subtextEl.textContent = "⚙️ Aggregating 99,441 records & calculating executive KPIs...";
-              subtextEl.style.color = "#fbbf24";
+            if (pillText && loadingPill && !loadingPill.classList.contains("hidden")) {
+              pillText.textContent = "⚙️ Aggregating 99k orders & computing KPIs...";
             }
           }, 8500);
-
-          // Safety timeout: never leave user locked out if navigation is canceled
-          safetyTimeout = setTimeout(function () {
-            hide();
-          }, 15000);
         }
 
-        function hide() {
+        function hidePill() {
           clearTimeout(coldStartTimer1);
           clearTimeout(coldStartTimer2);
-          clearTimeout(safetyTimeout);
+          if (loadingPill) loadingPill.classList.add("hidden");
           finishProgressBar();
-          if (loader) {
-            loader.classList.add("hidden");
-          }
+          document.body.style.cursor = "default";
+        }
+
+        function showModal(title, subtext) {
+          if (modalStatus && title) modalStatus.textContent = title;
+          if (modalSubtext && subtext) modalSubtext.textContent = subtext;
+          if (modalLoader) modalLoader.classList.remove("hidden");
+          startProgressBar();
+        }
+
+        function hideModal() {
+          if (modalLoader) modalLoader.classList.add("hidden");
+          finishProgressBar();
         }
 
         window.GlobalLoader = {
-          show: show,
-          hide: hide,
-          setProgress: setProgress,
-          startProgressBar: startProgressBar,
-          finishProgressBar: finishProgressBar,
+          start: startProgressBar,
+          finish: finishProgressBar,
+          showPill: showPill,
+          hidePill: hidePill,
+          showModal: showModal,
+          hideModal: hideModal,
+          show: showModal,
+          hide: function () {
+            hidePill();
+            hideModal();
+          },
         };
-        window.showGlobalLoader = show;
-        window.hideGlobalLoader = hide;
+        window.showGlobalLoader = showModal;
+        window.hideGlobalLoader = hideModal;
 
-        // Dismiss loader when page finishes loading
+        // Dismiss when page completes
         if (document.readyState === "complete") {
-          setTimeout(hide, 150);
+          setTimeout(hidePill, 100);
         } else {
           window.addEventListener("load", function () {
-            setTimeout(hide, 200);
+            setTimeout(hidePill, 150);
           });
         }
 
         // Handle bfcache (browser back/forward button)
-        window.addEventListener("pageshow", function (event) {
-          if (event.persisted) {
-            hide();
-          }
+        window.addEventListener("pageshow", function () {
+          hidePill();
+          hideModal();
         });
 
-        // Intercept internal link clicks to display instant feedback
+        // Intercept internal link clicks for visual feedback WITHOUT blocking navigation
         document.addEventListener("click", function (event) {
           const link = event.target.closest("a");
           if (!link) return;
@@ -314,7 +362,7 @@
           const href = link.getAttribute("href");
           if (!href) return;
 
-          // Skip hash anchors, external links, downloads, or JS actions
+          // Skip non-navigational links
           if (
             href.startsWith("#") ||
             href.startsWith("javascript:") ||
@@ -332,25 +380,28 @@
             const url = new URL(link.href, window.location.href);
             if (url.origin === window.location.origin) {
               if (url.pathname === window.location.pathname && url.search === window.location.search) {
-                return; // Same page
+                return;
               }
               const linkText =
                 link.querySelector(".nav-text")?.textContent?.trim() ||
                 link.textContent?.trim() ||
                 "Module";
-              const cleanText = linkText.length > 28 ? linkText.substring(0, 25) + "..." : linkText;
-              show("Loading " + cleanText + "...", "Preparing data cache & rendering visualizations");
+              const cleanText = linkText.length > 25 ? linkText.substring(0, 22) + "..." : linkText;
+
+              // Immediate visual feedback (NEVER blocks native link navigation)
+              document.body.style.cursor = "wait";
+              showPill("Loading " + cleanText + "...");
             }
           } catch (e) {
-            // Safe fallback
+            // Native navigation continues regardless
           }
         });
 
-        // Intercept form submissions
+        // Intercept form submissions (e.g. CSV upload)
         document.addEventListener("submit", function (event) {
           const form = event.target;
           if (form.target === "_blank") return;
-          show("Processing Request...", "Executing pipeline & generating analysis");
+          showModal("Processing Request...", "Executing pipeline & generating analysis");
         });
       })();
     </script>

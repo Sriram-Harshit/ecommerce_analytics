@@ -26,7 +26,8 @@ SECRET_KEY = os.environ.get(
     "SECRET_KEY", "django-insecure-_1f7y-rwvgi_sp@*$o^&l3r%oqw=()ljwf^451dgn=7z1t6__("
 )
 
-DEBUG = os.environ.get("DEBUG", "True").lower() == "true"
+IS_RENDER = bool(os.environ.get("RENDER") or os.environ.get("RENDER_EXTERNAL_HOSTNAME"))
+DEBUG = False if IS_RENDER else (os.environ.get("DEBUG", "True").lower() == "true")
 
 ALLOWED_HOSTS = [
     "localhost",
