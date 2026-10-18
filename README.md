@@ -6,6 +6,12 @@
 [![Pandas](https://img.shields.io/badge/Pandas-DataFrames-150458?style=flat&logo=pandas&logoColor=white)](https://pandas.pydata.org/)
 [![Chart.js](https://img.shields.io/badge/Chart.js-Data%20Viz-FF6384?style=flat&logo=chartdotjs&logoColor=white)](https://www.chartjs.org/)
 [![Tests](https://img.shields.io/badge/Tests-18%20Passed-10B981?style=flat&logo=pytest&logoColor=white)](#-automated-testing)
+[![Live Demo](https://img.shields.io/badge/Live%20Demo-Render-46E3B7?style=flat&logo=render&logoColor=white)](https://ecommerce-analytics-gcm8.onrender.com/)
+
+> ⚠️ **Notice on Live Demo / Free Tier Hosting:**
+> This project is hosted on **Render's Free Tier** at **[https://ecommerce-analytics-gcm8.onrender.com/](https://ecommerce-analytics-gcm8.onrender.com/)**.
+> Because it is hosted on a free cloud service, inactive instances automatically go into idle sleep after 15 minutes of inactivity. **The initial page load may take 30 to 50 seconds to spin up the container and load dataset caches into memory.**
+> A real-time loading screen with a progress bar and status notifications has been integrated into the app so you can track the server initialization. Once awake, all page navigation and ML predictions are fast and responsive!
 
 An enterprise-grade **Full-Stack E-Commerce Analytics & Machine Learning Platform** built with **Django**, **Pandas**, **Scikit-Learn**, and **Chart.js**. It processes real-world transactional data from the **Olist Brazilian E-Commerce public dataset (100,000+ orders)** to deliver actionable business intelligence, customer cohort analytics, pipeline health audits, and an **interactive real-time ML delay simulator**.
 
@@ -252,17 +258,20 @@ System check identified no issues (0 silenced).
 
 ---
 
-## 🌐 Deployment Guide (Render.com)
+## 🌐 Deployment & Live Hosting (Render.com)
 
-The project is pre-configured with `gunicorn` for seamless free hosting on **Render.com**:
+* **Live Platform URL**: [https://ecommerce-analytics-gcm8.onrender.com/](https://ecommerce-analytics-gcm8.onrender.com/)
+* **Hosting Tier**: Render Free Web Service
+* **Cold-Start Performance Note**: Render spins down free containers after 15 minutes of inactivity. If visiting after an idle period, **the first request takes ~30–50 seconds to spin up the container and load the dataset into RAM**. The application includes an in-app loading overlay and progress bar that provides real-time feedback while the instance starts up. Once warmed, all subsequent dashboard views and API queries are near-instant (<100ms).
 
+### Deploying Your Own Instance:
 1. Push your repository to **GitHub**.
-2. Go to [dashboard.render.com](https://dashboard.render.com/) and click **"New +"** → **"Web Service"**.
+2. Go to [dashboard.render.com](https://dashboard.render.com/) and click **"New +"** → **"Web Service"** (or use the included [render.yaml](render.yaml) blueprint).
 3. Select your repository `ecommerce_analytics`.
 4. Configure the settings:
    - **Environment**: `Python 3`
    - **Build Command**: `pip install -r requirements.txt && python manage.py migrate`
-   - **Start Command**: `gunicorn ecommerce_analytics.wsgi:application`
+   - **Start Command**: `gunicorn ecommerce_analytics.wsgi:application --workers 1 --threads 4 --timeout 120`
 5. Click **"Create Web Service"** to launch your live platform with a free HTTPS URL.
 
 ---
